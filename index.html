@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema web para diagnóstico y tratamiento de tinnitus">
+  <title>Tinnitus Care - Diagnóstico y Tratamiento</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="header">
+    <div class="container">
+      <nav class="nav">
+        <div class="nav-brand">
+          <h1 class="nav-title">🎧 Tinnitus Care</h1>
+          <p class="nav-subtitle">Diagnóstico y Tratamiento</p>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="container">
+
+      <!-- Hero Section -->
+      <section class="hero">
+        <h2 class="hero-title">Sistema de Diagnóstico y Tratamiento de Tinnitus</h2>
+        <p class="hero-description">
+          Plataforma web profesional para evaluación audiométrica,
+          identificación de frecuencia de tinnitus y tratamientos
+          basados en evidencia científica.
+        </p>
+      </section>
+
+      <!-- Progress Card -->
+      <div class="card mb-8" id="progressCard">
+        <h3 class="mb-4">Tu Progreso</h3>
+        <div class="progress-grid">
+          <div class="progress-item">
+            <div class="progress-icon">📊</div>
+            <div class="progress-info">
+              <h4>Audiometría</h4>
+              <p id="audiometryStatus" class="text-secondary">No completada</p>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-icon">🎯</div>
+            <div class="progress-info">
+              <h4>Frecuencia Tinnitus</h4>
+              <p id="tinnitusStatus" class="text-secondary">No identificada</p>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-icon">🎵</div>
+            <div class="progress-info">
+              <h4>Tratamiento</h4>
+              <p id="treatmentStatus" class="text-secondary">No iniciado</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module Cards -->
+      <div class="modules-grid">
+
+        <!-- Module 1: Audiometry -->
+        <div class="card module-card">
+          <div class="module-icon">📊</div>
+          <h3 class="module-title">Módulo 1: Audiometría Fina</h3>
+          <p class="module-description">
+            Evaluación audiométrica completa con algoritmo adaptativo.
+            Identifica tu perfil auditivo y frecuencias con problemas.
+          </p>
+          <ul class="module-features">
+            <li>✓ 13 frecuencias evaluadas (125 Hz - 12 kHz)</li>
+            <li>✓ Algoritmo adaptativo random</li>
+            <li>✓ Duración: 15-20 minutos</li>
+            <li>✓ Audiograma detallado</li>
+          </ul>
+          <div class="module-actions">
+            <a href="audiometry.html" class="btn btn-primary btn-lg">
+              Comenzar Audiometría →
+            </a>
+          </div>
+        </div>
+
+        <!-- Module 2: Tinnitus Matching -->
+        <div class="card module-card">
+          <div class="module-icon">🎯</div>
+          <h3 class="module-title">Módulo 2: Búsqueda de Tinnitus</h3>
+          <p class="module-description">
+            Identifica con precisión la frecuencia exacta de tu tinnitus
+            mediante búsqueda guiada y ajuste fino.
+          </p>
+          <ul class="module-features">
+            <li>✓ Búsqueda en múltiples etapas</li>
+            <li>✓ Slider de frecuencia continua</li>
+            <li>✓ Validación cruzada A/B</li>
+            <li>✓ Confianza del match calculada</li>
+          </ul>
+          <div class="module-actions">
+            <button id="btnMatching" class="btn btn-secondary btn-lg" disabled>
+              Buscar Frecuencia →
+            </button>
+            <p class="text-sm text-secondary mt-2">
+              <small>* Requiere completar audiometría primero</small>
+            </p>
+          </div>
+        </div>
+
+        <!-- Module 3: Treatment -->
+        <div class="card module-card">
+          <div class="module-icon">🎵</div>
+          <h3 class="module-title">Módulo 3: Tratamiento</h3>
+          <p class="module-description">
+            Múltiples opciones de tratamiento con sonidos escalonados
+            basados en protocolos científicos.
+          </p>
+          <ul class="module-features">
+            <li>✓ Terapia Notched (muesca en frecuencia)</li>
+            <li>✓ Neuromodulación CR</li>
+            <li>✓ Enmascaramiento sonoro</li>
+            <li>✓ Sonidos ambientales terapéuticos</li>
+          </ul>
+          <div class="module-actions">
+            <button id="btnTreatment" class="btn btn-secondary btn-lg" disabled>
+              Iniciar Tratamiento →
+            </button>
+            <p class="text-sm text-secondary mt-2">
+              <small>* Requiere identificar frecuencia de tinnitus</small>
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Info Section -->
+      <section class="info-section">
+        <div class="card">
+          <h3 class="mb-4">ℹ️ Información Importante</h3>
+          <div class="alert alert-info">
+            <strong>Requisitos:</strong> Esta aplicación requiere audífonos de buena calidad y un navegador moderno con soporte para Web Audio API (Chrome, Firefox, Edge, Safari).
+          </div>
+          <div class="alert alert-warning mt-4">
+            <strong>Aviso médico:</strong> Esta herramienta es complementaria y no sustituye la consulta con un profesional de la salud. Si experimentas tinnitus persistente, consulta a un otorrinolaringólogo o audiólogo.
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Management -->
+      <section class="data-section">
+        <div class="card">
+          <h3 class="mb-4">📁 Gestión de Datos</h3>
+          <p class="mb-4">Tus datos se guardan localmente en tu navegador (LocalStorage).</p>
+          <div class="flex gap-4">
+            <button id="btnExportData" class="btn btn-secondary">
+              📥 Exportar Datos
+            </button>
+            <button id="btnClearData" class="btn btn-secondary">
+              🗑️ Borrar Todos los Datos
+            </button>
+          </div>
+          <p class="text-sm text-secondary mt-4" id="storageInfo"></p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p class="text-center text-secondary">
+        Tinnitus Care MVP v1.0 | Basado en evidencia científica |
+        <a href="PLAN_MVP_BASICO.md" target="_blank">Documentación</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio-context.js"></script>
+  <script>
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      initializePage();
+      updateProgress();
+      updateStorageInfo();
+      setupEventListeners();
+    });
+
+    function initializePage() {
+      // Check browser compatibility
+      if (!Utils.supportsWebAudio()) {
+        alert('Tu navegador no soporta Web Audio API. Por favor usa Chrome, Firefox o Edge.');
+        return;
+      }
+
+      if (!Utils.supportsLocalStorage()) {
+        alert('Tu navegador no soporta LocalStorage. Tus datos no se guardarán.');
+      }
+
+      console.log('✓ Página inicializada correctamente');
+    }
+
+    function updateProgress() {
+      const progress = Storage.getProgress();
+      const audiometryResults = Storage.getLatestAudiometryResults();
+      const tinnitusMatch = Storage.getTinnitusMatch();
+      const sessions = Storage.getTreatmentSessionsCount();
+
+      // Update audiometry status
+      if (audiometryResults) {
+        document.getElementById('audiometryStatus').textContent = '✓ Completada';
+        document.getElementById('audiometryStatus').classList.add('text-success');
+        document.getElementById('btnMatching').disabled = false;
+        document.getElementById('btnMatching').classList.remove('btn-secondary');
+        document.getElementById('btnMatching').classList.add('btn-primary');
+        document.getElementById('btnMatching').onclick = () => {
+          window.location.href = 'matching.html';
+        };
+      }
+
+      // Update tinnitus status
+      if (tinnitusMatch) {
+        document.getElementById('tinnitusStatus').textContent =
+          `✓ ${Math.round(tinnitusMatch.frequency)} Hz identificados`;
+        document.getElementById('tinnitusStatus').classList.add('text-success');
+        document.getElementById('btnTreatment').disabled = false;
+        document.getElementById('btnTreatment').classList.remove('btn-secondary');
+        document.getElementById('btnTreatment').classList.add('btn-primary');
+        document.getElementById('btnTreatment').onclick = () => {
+          window.location.href = 'treatment.html';
+        };
+      }
+
+      // Update treatment status
+      if (sessions > 0) {
+        document.getElementById('treatmentStatus').textContent =
+          `✓ ${sessions} sesión${sessions > 1 ? 'es' : ''} completada${sessions > 1 ? 's' : ''}`;
+        document.getElementById('treatmentStatus').classList.add('text-success');
+      }
+    }
+
+    function updateStorageInfo() {
+      const info = Storage.getStorageInfo();
+      const infoEl = document.getElementById('storageInfo');
+      if (info.usedKB) {
+        infoEl.textContent = `Espacio usado: ${info.usedKB} KB`;
+      }
+    }
+
+    function setupEventListeners() {
+      // Export data
+      document.getElementById('btnExportData').addEventListener('click', () => {
+        const data = Storage.exportData();
+        const dataStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tinnitus-data-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        Utils.showNotification('Datos exportados correctamente', 'success');
+      });
+
+      // Clear data
+      document.getElementById('btnClearData').addEventListener('click', () => {
+        if (confirm('¿Estás seguro de que quieres borrar todos los datos? Esta acción no se puede deshacer.')) {
+          Storage.clearAll();
+          Utils.showNotification('Todos los datos han sido borrados', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      });
+    }
+  </script>
+
+  <style>
+    /* Page-specific styles */
+    .header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary-blue));
+      color: var(--text-inverse);
+      padding: var(--space-6) 0;
+      margin-bottom: var(--space-8);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .nav-title {
+      margin: 0;
+      font-size: var(--text-3xl);
+      font-weight: var(--font-bold);
+    }
+
+    .nav-subtitle {
+      margin: 0;
+      font-size: var(--text-base);
+      opacity: 0.9;
+    }
+
+    .main {
+      padding: var(--space-8) 0;
+      min-height: calc(100vh - 200px);
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: var(--space-12);
+    }
+
+    .hero-title {
+      font-size: var(--text-4xl);
+      margin-bottom: var(--space-4);
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-description {
+      font-size: var(--text-lg);
+      color: var(--text-secondary);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-6);
+    }
+
+    .progress-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-4);
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+    }
+
+    .progress-icon {
+      font-size: var(--text-4xl);
+    }
+
+    .progress-info h4 {
+      margin: 0 0 var(--space-1) 0;
+      font-size: var(--text-lg);
+    }
+
+    .progress-info p {
+      margin: 0;
+      font-size: var(--text-sm);
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-6);
+      margin-bottom: var(--space-12);
+    }
+
+    .module-card {
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
+    }
+
+    .module-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .module-icon {
+      font-size: 4rem;
+      text-align: center;
+      margin-bottom: var(--space-4);
+    }
+
+    .module-title {
+      margin-bottom: var(--space-3);
+      color: var(--primary-dark);
+    }
+
+    .module-description {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+      flex-grow: 1;
+    }
+
+    .module-features {
+      list-style: none;
+      margin-bottom: var(--space-6);
+    }
+
+    .module-features li {
+      padding: var(--space-2) 0;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+    }
+
+    .module-actions {
+      margin-top: auto;
+    }
+
+    .info-section,
+    .data-section {
+      margin-bottom: var(--space-8);
+    }
+
+    .footer {
+      background: var(--gray-800);
+      color: var(--text-inverse);
+      padding: var(--space-6) 0;
+      margin-top: var(--space-12);
+    }
+
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: var(--text-2xl);
+      }
+
+      .modules-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</body>
+</html>
