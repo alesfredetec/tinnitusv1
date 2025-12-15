@@ -156,6 +156,9 @@ class TinnitusMatchingUI {
       case 'validation':
         this.renderValidation();
         break;
+      case 'mml':
+        this.renderMML();
+        break;
     }
   }
 
@@ -489,6 +492,98 @@ class TinnitusMatchingUI {
   }
 
   /**
+   * Stage 6: MML (Minimum Masking Level)
+   */
+  renderMML() {
+    const progress = this.engine.getProgress();
+    const currentLevel = this.engine.mmlLevel;
+    const frequency = this.engine.matchedFrequency;
+
+    this.container.innerHTML = `
+      <div class="matching-container">
+        ${this.renderProgressBar(progress)}
+
+        <div class="card">
+          <h2 class="mb-4">Etapa 6: Nivel Mínimo de Enmascaramiento (MML)</h2>
+
+          <div class="alert alert-info mb-6">
+            Ahora mediremos el nivel mínimo de ruido que enmascara (oculta) tu tinnitus.
+            Este dato es importante para determinar la severidad y planificar el tratamiento.
+          </div>
+
+          <!-- Frequency Display -->
+          <div class="mb-6 text-center">
+            <div class="text-sm text-secondary mb-2">Frecuencia de tu tinnitus:</div>
+            <div class="text-3xl font-bold text-primary">${frequency} Hz</div>
+          </div>
+
+          <!-- Current MML Level -->
+          <div class="mb-6 p-4 bg-light rounded">
+            <div class="text-center mb-2">
+              <div class="text-sm text-secondary mb-2">Nivel actual de enmascaramiento:</div>
+              <div class="text-4xl font-bold ${currentLevel >= 0 ? 'text-success' : 'text-warning'}">
+                ${currentLevel > 0 ? '+' : ''}${currentLevel} dB
+              </div>
+            </div>
+          </div>
+
+          <!-- Instructions -->
+          <div class="alert alert-warning mb-6">
+            <strong>Instrucciones:</strong>
+            <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+              <li>Presiona "Reproducir Enmascarador" para escuchar el ruido</li>
+              <li>Si todavía escuchas tu tinnitus, aumenta el nivel</li>
+              <li>Si ya no escuchas tu tinnitus, confirma el nivel</li>
+              <li>Puedes ajustar el nivel hacia arriba o abajo según necesites</li>
+            </ol>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex flex-col gap-4 mb-6">
+            <!-- Play Button -->
+            <button class="btn btn-primary btn-lg w-full"
+                    onclick="matchingUI.playMasker()"
+                    ${this.isPlaying ? 'disabled' : ''}>
+              ${this.isPlaying ? '🔊 Reproduciendo...' : '▶ Reproducir Enmascarador'}
+            </button>
+
+            <!-- Level Adjustment -->
+            <div class="flex gap-4">
+              <button class="btn btn-secondary flex-1"
+                      onclick="matchingUI.decreaseMMLLevel()"
+                      ${this.isPlaying ? 'disabled' : ''}>
+                ⬇ Disminuir (-5 dB)
+              </button>
+              <button class="btn btn-secondary flex-1"
+                      onclick="matchingUI.increaseMMLLevel()"
+                      ${this.isPlaying ? 'disabled' : ''}>
+                ⬆ Aumentar (+5 dB)
+              </button>
+            </div>
+
+            <!-- Confirm/Skip -->
+            <div class="flex gap-4">
+              <button class="btn btn-success flex-1"
+                      onclick="matchingUI.confirmMasking()">
+                ✓ Confirmar Enmascaramiento
+              </button>
+              <button class="btn btn-outline flex-1"
+                      onclick="matchingUI.skipMML()">
+                ⏭ Omitir MML
+              </button>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="text-sm text-secondary text-center">
+            El MML ayuda a determinar la severidad del tinnitus y personalizar el tratamiento.
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
    * Show completion screen
    */
   showCompletionScreen(results) {
@@ -520,6 +615,11 @@ class TinnitusMatchingUI {
             ${results.ear !== 'both' ? `
               <div class="detail-item">
                 <strong>Oído:</strong> ${results.ear === 'left' ? 'Izquierdo' : 'Derecho'}
+              </div>
+            ` : ''}
+            ${results.mml && !results.mml.skipped ? `
+              <div class="detail-item">
+                <strong>MML (Nivel Mínimo de Enmascaramiento):</strong> ${results.mml.level > 0 ? '+' : ''}${results.mml.level} dB
               </div>
             ` : ''}
           </div>
@@ -715,6 +815,57 @@ class TinnitusMatchingUI {
    */
   completeValidation() {
     this.engine.complete();
+  }
+
+  /**
+   * Play masker noise for MML testing
+   */
+  async playMasker() {
+    if (this.isPlaying) return;
+
+    this.isPlaying = true;
+    this.renderMML(); // Re-render to update button state
+
+    try {
+      await this.engine.playMasker();
+    } catch (error) {
+      Logger.error('matching-ui', 'Error playing masker:', error);
+    } finally {
+      this.isPlaying = false;
+      this.renderMML(); // Re-render to update button state
+    }
+  }
+
+  /**
+   * Increase MML level
+   */
+  increaseMMLLevel() {
+    this.engine.increaseMMLLevel();
+    this.renderMML();
+  }
+
+  /**
+   * Decrease MML level
+   */
+  decreaseMMLLevel() {
+    this.engine.decreaseMMLLevel();
+    this.renderMML();
+  }
+
+  /**
+   * Confirm masking level
+   */
+  confirmMasking() {
+    Logger.info('matching-ui', '✅ Usuario confirmó nivel de enmascaramiento');
+    this.engine.confirmMasking();
+  }
+
+  /**
+   * Skip MML testing
+   */
+  skipMML() {
+    Logger.info('matching-ui', '⏭️ Usuario omitió MML');
+    this.engine.skipMML();
   }
 
   /**

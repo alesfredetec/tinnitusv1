@@ -6,8 +6,8 @@
 class TinnitusMatchingEngine {
   constructor() {
     // Search stages
-    this.currentStage = 'range-selection'; // 'range-selection', 'coarse', 'refinement', 'fine-tuning', 'validation'
-    this.stages = ['range-selection', 'coarse', 'refinement', 'fine-tuning', 'validation'];
+    this.currentStage = 'range-selection'; // 'range-selection', 'coarse', 'refinement', 'fine-tuning', 'validation', 'mml'
+    this.stages = ['range-selection', 'coarse', 'refinement', 'fine-tuning', 'validation', 'mml'];
 
     // State
     this.selectedRange = null; // { min, max, center }
@@ -27,6 +27,21 @@ class TinnitusMatchingEngine {
     this.finalMatch = null;
     this.validationScore = 0;
     this.validationTests = [];
+
+    // MML (Minimum Masking Level) configuration
+    this.config = {
+      enableMML: true,           // Enable MML testing
+      mmlStartLevel: -20,        // Start at -20 dB (quiet)
+      mmlStepSize: 5,            // Increase by 5 dB per step
+      mmlMaxLevel: 40,           // Maximum 40 dB above threshold
+      mmlNoiseType: 'narrow-band', // 'narrow-band' or 'white'
+      mmlBandwidth: 500          // Hz - bandwidth for narrow-band noise
+    };
+
+    // MML state
+    this.mmlLevel = this.config.mmlStartLevel; // Current MML test level (dB)
+    this.mmlResult = null;     // Final MML result
+    this.mmlAttempts = [];     // History of MML attempts
 
     // Callbacks
     this.onStageChange = null;
@@ -382,9 +397,124 @@ class TinnitusMatchingEngine {
   }
 
   /**
-   * Complete validation and finish
+   * Complete validation and move to MML (or finish if MML disabled)
    */
   complete() {
+    // Check if MML is enabled
+    if (this.config.enableMML) {
+      Logger.info('matching', '✅ Validación completa. Iniciando MML...');
+      this.startMML();
+    } else {
+      Logger.info('matching', '✅ Validación completa. MML deshabilitado.');
+      this.finalize();
+    }
+  }
+
+  /**
+   * Start MML (Minimum Masking Level) testing
+   */
+  startMML() {
+    this.currentStage = 'mml';
+    this.mmlLevel = this.config.mmlStartLevel;
+    this.mmlAttempts = [];
+
+    Logger.step('matching', 6, 6, 'MML (Minimum Masking Level) iniciado');
+    Logger.info('matching', `🔊 Prueba de enmascaramiento en ${this.matchedFrequency} Hz`);
+    Logger.debug('matching', `Nivel inicial: ${this.mmlLevel} dB, Paso: ${this.config.mmlStepSize} dB`);
+
+    if (this.onStageChange) {
+      this.onStageChange(this.currentStage, 5);
+    }
+  }
+
+  /**
+   * Play masking noise at current MML level
+   */
+  async playMasker(duration = 3) {
+    const frequency = this.matchedFrequency;
+    const bandwidth = this.config.mmlBandwidth;
+    const level = this.mmlLevel;
+
+    Logger.debug('matching', `🔊 Reproduciendo ruido enmascarador: ${frequency} Hz (±${bandwidth/2} Hz) a ${level} dB por ${duration}s`);
+
+    // Record attempt
+    this.mmlAttempts.push({
+      level: level,
+      frequency: frequency,
+      timestamp: Date.now()
+    });
+
+    // Convert dB to volume (0.0 to 1.0)
+    // -20 dB = 0.1, 0 dB = 0.3, +20 dB = 0.7, +40 dB = 1.0
+    const volume = Math.min(1.0, Math.max(0.05, 0.3 + (level / 100)));
+
+    // Play narrow-band noise
+    if (this.config.mmlNoiseType === 'narrow-band') {
+      await AudioContextManager.playNarrowBandNoise(frequency, bandwidth, duration, volume);
+    } else {
+      await AudioContextManager.playWhiteNoise(duration, volume);
+    }
+
+    Logger.debug('matching', `Nivel MML probado: ${level} dB (vol: ${(volume * 100).toFixed(0)}%)`);
+  }
+
+  /**
+   * Increase MML level by step size
+   */
+  increaseMMLLevel() {
+    const oldLevel = this.mmlLevel;
+    this.mmlLevel = Math.min(this.config.mmlMaxLevel, this.mmlLevel + this.config.mmlStepSize);
+    Logger.info('matching', `📈 Nivel MML aumentado: ${oldLevel} dB → ${this.mmlLevel} dB`);
+    return this.mmlLevel;
+  }
+
+  /**
+   * Decrease MML level by step size
+   */
+  decreaseMMLLevel() {
+    const oldLevel = this.mmlLevel;
+    this.mmlLevel = Math.max(this.config.mmlStartLevel, this.mmlLevel - this.config.mmlStepSize);
+    Logger.info('matching', `📉 Nivel MML disminuido: ${oldLevel} dB → ${this.mmlLevel} dB`);
+    return this.mmlLevel;
+  }
+
+  /**
+   * Confirm that current MML level masks the tinnitus
+   */
+  confirmMasking() {
+    this.mmlResult = {
+      level: this.mmlLevel,
+      frequency: this.matchedFrequency,
+      noiseType: this.config.mmlNoiseType,
+      bandwidth: this.config.mmlBandwidth,
+      attempts: this.mmlAttempts.length,
+      timestamp: Date.now()
+    };
+
+    Logger.success('matching', `✅ MML confirmado: ${this.mmlLevel} dB enmascara el tinnitus`);
+    Logger.debug('matching', `Intentos totales: ${this.mmlAttempts.length}`);
+
+    this.finalize();
+  }
+
+  /**
+   * Skip MML testing
+   */
+  skipMML() {
+    Logger.warn('matching', '⏭️ MML omitido por el usuario');
+    this.mmlResult = {
+      level: null,
+      skipped: true,
+      reason: 'User skipped',
+      timestamp: Date.now()
+    };
+    this.finalize();
+  }
+
+  /**
+   * Finalize and save results
+   */
+  finalize() {
     this.isRunning = false;
     Logger.info('matching', '🏁 Finalizando búsqueda de tinnitus...');
 
@@ -396,6 +526,7 @@ class TinnitusMatchingEngine {
       waveType: this.waveType,
       validationScore: `${this.validationScore}/${this.validationTests.length}`,
       ear: this.selectedRange?.ear || 'both',
+      mml: this.mmlResult,
       timestamp: new Date().toISOString()
     };
 
@@ -405,6 +536,13 @@ class TinnitusMatchingEngine {
     Logger.info('matching', `Validación: ${this.finalMatch.validationScore}`);
     Logger.info('matching', `Oído: ${this.finalMatch.ear}`);
     Logger.info('matching', `Tipo de onda: ${this.finalMatch.waveType}`);
+
+    if (this.mmlResult && !this.mmlResult.skipped) {
+      Logger.success('matching', `MML (Nivel de Enmascaramiento): ${this.mmlResult.level} dB`);
+    } else if (this.mmlResult && this.mmlResult.skipped) {
+      Logger.warn('matching', 'MML: Omitido');
+    }
+
     Logger.groupEnd();
 
     if (this.onComplete) {

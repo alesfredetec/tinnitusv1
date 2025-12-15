@@ -302,6 +302,123 @@ const AudioContextManager = (() => {
   }
 
   /**
+   * Play narrow-band noise
+   * @param {number} centerFreq - Center frequency in Hz
+   * @param {number} bandwidth - Bandwidth in Hz
+   * @param {number} duration - Duration in seconds
+   * @param {number} volume - Volume (0-1)
+   * @returns {Promise}
+   */
+  async function playNarrowBandNoise(centerFreq = 4000, bandwidth = 500, duration = 3, volume = 0.3) {
+    if (!isReady()) {
+      await resume();
+    }
+
+    return new Promise((resolve) => {
+      // Create white noise buffer
+      const bufferSize = audioContext.sampleRate * duration;
+      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Fill with random noise
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      // Create buffer source
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+
+      // Create bandpass filter
+      const filter = createFilter('bandpass', centerFreq, bandwidth / centerFreq);
+
+      // Create gain node for volume control
+      const gainNode = createGain(0);
+
+      // Connect: source → filter → gain → master
+      source.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(masterGain);
+
+      const now = audioContext.currentTime;
+
+      // Fade in
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(volume, now + 0.05);
+
+      // Fade out
+      gainNode.gain.linearRampToValueAtTime(volume, now + duration - 0.05);
+      gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+      // Start playback
+      source.start(now);
+      source.stop(now + duration);
+
+      source.onended = () => {
+        source.disconnect();
+        filter.disconnect();
+        gainNode.disconnect();
+        resolve();
+      };
+    });
+  }
+
+  /**
+   * Play white noise
+   * @param {number} duration - Duration in seconds
+   * @param {number} volume - Volume (0-1)
+   * @returns {Promise}
+   */
+  async function playWhiteNoise(duration = 3, volume = 0.3) {
+    if (!isReady()) {
+      await resume();
+    }
+
+    return new Promise((resolve) => {
+      // Create white noise buffer
+      const bufferSize = audioContext.sampleRate * duration;
+      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Fill with random noise
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      // Create buffer source
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+
+      // Create gain node for volume control
+      const gainNode = createGain(0);
+
+      // Connect: source → gain → master
+      source.connect(gainNode);
+      gainNode.connect(masterGain);
+
+      const now = audioContext.currentTime;
+
+      // Fade in
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(volume, now + 0.05);
+
+      // Fade out
+      gainNode.gain.linearRampToValueAtTime(volume, now + duration - 0.05);
+      gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+      // Start playback
+      source.start(now);
+      source.stop(now + duration);
+
+      source.onended = () => {
+        source.disconnect();
+        gainNode.disconnect();
+        resolve();
+      };
+    });
+  }
+
+  /**
    * Convert dB to gain
    * @param {number} db - Decibels
    * @returns {number} Linear gain
@@ -339,6 +456,8 @@ const AudioContextManager = (() => {
     createPanner,
     createBuffer,
     playTone,
+    playNarrowBandNoise,
+    playWhiteNoise,
     dbToGain,
     gainToDb
   };

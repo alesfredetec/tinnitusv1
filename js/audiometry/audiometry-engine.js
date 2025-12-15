@@ -64,6 +64,11 @@ class AudiometryEngine {
     this.testQueue = [];
     this.completedTests = [];
 
+    // Test-retest tracking
+    this.allThresholds = {};  // { frequency: { left: [test1, test2, ...], right: [...] } }
+    this.retestQueue = [];  // Frequencies that need retesting
+    this.retestPhase = false;  // Are we in retest phase?
+
     // Testing stages
     this.currentStage = 'standard'; // 'standard' or 'micro'
     this.problemFrequencies = []; // Frequencies identified for micro-audiometry
@@ -567,10 +572,22 @@ class AudiometryEngine {
   }
 
   /**
-   * Save threshold for current frequency/ear
+   * Save threshold for current frequency/ear (with test-retest tracking)
    */
   saveThreshold() {
     const threshold = this.calculateThreshold();
+
+    // Track ALL thresholds for test-retest analysis
+    if (!this.allThresholds[this.currentFrequency]) {
+      this.allThresholds[this.currentFrequency] = { left: [], right: [] };
+    }
+    this.allThresholds[this.currentFrequency][this.currentEar].push(threshold);
+
+    // Calculate final threshold (median if multiple tests)
+    const allTests = this.allThresholds[this.currentFrequency][this.currentEar];
+    const finalThreshold = allTests.length > 1
+      ? this.calculateMedian(allTests)
+      : threshold;
 
     // Save to appropriate results object based on current stage
     const resultsObj = this.currentStage === 'micro' ? this.microResults : this.results;
@@ -579,20 +596,152 @@ class AudiometryEngine {
       resultsObj[this.currentFrequency] = {};
     }
 
-    resultsObj[this.currentFrequency][this.currentEar] = threshold;
+    resultsObj[this.currentFrequency][this.currentEar] = finalThreshold;
 
     const stageLabel = this.currentStage === 'micro' ? '[MICRO]' : '[STD]';
-    console.log(`✓ ${stageLabel} Threshold found: ${this.currentFrequency} Hz (${this.currentEar}) = ${threshold} dB HL`);
+    const testCount = allTests.length;
+    if (testCount > 1) {
+      Logger.info('audiometry',
+        `✓ ${stageLabel} Threshold (${testCount} tests): ${this.currentFrequency} Hz (${this.currentEar}) = ${finalThreshold} dB HL (median of ${allTests.join(', ')})`
+      );
+    } else {
+      Logger.info('audiometry',
+        `✓ ${stageLabel} Threshold found: ${this.currentFrequency} Hz (${this.currentEar}) = ${threshold} dB HL`
+      );
+    }
+
+    console.log(`✓ ${stageLabel} Threshold: ${this.currentFrequency} Hz (${this.currentEar}) = ${finalThreshold} dB HL`);
+  }
+
+  /**
+   * Calculate median of array
+   */
+  calculateMedian(values) {
+    if (values.length === 0) return 0;
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+      ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+      : sorted[mid];
+  }
+
+  /**
+   * Identify frequencies that need retesting (high variability or in tinnitus range)
+   */
+  identifyRetestFrequencies() {
+    if (!this.config.enableTestRetest) return [];
+
+    const retest = [];
+    const sortedFreqs = Object.keys(this.results).map(Number).sort((a, b) => a - b);
+
+    sortedFreqs.forEach(freq => {
+      ['left', 'right'].forEach(ear => {
+        const tests = this.allThresholds[freq]?.[ear] || [];
+
+        if (tests.length === 0) return;
+
+        // Calculate variability (range of tests)
+        const min = Math.min(...tests);
+        const max = Math.max(...tests);
+        const variability = max - min;
+
+        // Check if in tinnitus range
+        const inTinnitusRange = freq >= this.config.tinnitusRangeMin &&
+                                freq <= this.config.tinnitusRangeMax;
+
+        // Retest criteria:
+        // 1. Variability > 10 dB
+        // 2. In tinnitus range and only 1 test so far
+        // 3. Problem frequency (high threshold or drop)
+        const needsRetest =
+          (variability > this.config.retestThreshold) ||
+          (inTinnitusRange && tests.length < 2 && this.config.retestInTinnitusRange) ||
+          (this.results[freq][ear] > 40);  // High threshold = retest
+
+        if (needsRetest && tests.length < 3) {  // Max 3 tests per frequency
+          retest.push({
+            frequency: freq,
+            ear: ear,
+            reason: variability > this.config.retestThreshold
+              ? `high variability (${variability} dB)`
+              : inTinnitusRange
+                ? 'tinnitus range validation'
+                : 'high threshold',
+            currentTests: tests.length,
+            variability: variability
+          });
+        }
+      });
+    });
+
+    return retest;
+  }
+
+  /**
+   * Run test-retest phase for frequencies with high variability
+   */
+  async runRetestPhase() {
+    this.retestQueue = this.identifyRetestFrequencies();
+
+    if (this.retestQueue.length === 0) {
+      Logger.info('audiometry', '✅ No frequencies need retesting - all thresholds reliable');
+      return;
+    }
+
+    Logger.info('audiometry', `🔄 RETEST PHASE: ${this.retestQueue.length} frequencies need validation`);
+    this.retestQueue.forEach(rt => {
+      Logger.debug('audiometry', `  • ${rt.frequency} Hz (${rt.ear}): ${rt.reason}`);
+    });
+
+    this.retestPhase = true;
+
+    // Retest each frequency
+    for (const retestItem of this.retestQueue) {
+      Logger.info('audiometry', `🔄 Retesting ${retestItem.frequency} Hz (${retestItem.ear}) - Test ${retestItem.currentTests + 1}/3`);
+
+      // Set current test
+      this.currentFrequency = retestItem.frequency;
+      this.currentEar = retestItem.ear;
+
+      // Reset state for retest
+      this.currentLevel = this.config.startLevel;
+      this.lastDirection = null;
+      this.responses = [];
+      this.ascendingResponses = [];
+      this.descendingPhase = true;
+      this.lowestHeard = null;
+      this.highestNotHeard = null;
+
+      // Run threshold detection
+      await this.runAdaptiveProcedure();
+
+      // Threshold is automatically saved by saveThreshold() which calculates median
+    }
+
+    this.retestPhase = false;
+    Logger.success('audiometry', `✅ Retest phase complete - all ${this.retestQueue.length} frequencies retested`);
   }
 
   /**
    * Finish current stage and transition to micro-audiometry if needed
    */
   async finish() {
-    // Stage 1 (Standard) complete - check if we need micro-audiometry
-    if (this.currentStage === 'standard' && this.config.enableMicroAudiometry) {
+    // Stage 1 (Standard) complete - Run test-retest if needed
+    if (this.currentStage === 'standard' && this.config.enableTestRetest && !this.retestPhase) {
       console.log('Standard Audiometry (Stage 1) complete!');
       console.log('Results:', this.results);
+
+      // Run test-retest phase
+      await this.runRetestPhase();
+
+      // After retest, check if we need micro-audiometry
+      if (this.config.enableMicroAudiometry) {
+        console.log('Retest complete. Checking for micro-audiometry needs...');
+      }
+    }
+
+    // Check if we need micro-audiometry
+    if (this.currentStage === 'standard' && this.config.enableMicroAudiometry) {
 
       // Identify problem frequencies
       this.problemFrequencies = this.identifyProblemFrequencies();
@@ -671,12 +820,12 @@ class AudiometryEngine {
           const drop = currLevel - prevLevel;
 
           // Trigger micro-audiometry if:
-          // 1. Drop > threshold (20 dB default)
-          // 2. OR frequency is in tinnitus range (4000-7000 Hz) with any significant change (>15 dB)
+          // 1. Drop > 15 dB (professional standard)
+          // 2. OR frequency is in tinnitus range (4000-7000 Hz) with any significant change (>10 dB)
           const inTinnitusRange = currFreq >= this.config.tinnitusRangeMin &&
                                    currFreq <= this.config.tinnitusRangeMax;
           const shouldTest = drop > this.config.problemThreshold ||
-                            (inTinnitusRange && drop > 15);
+                            (inTinnitusRange && drop > 10);
 
           if (shouldTest) {
             problems.push({
@@ -866,7 +1015,7 @@ class AudiometryEngine {
         if (prevLevel !== undefined && currLevel !== undefined) {
           const drop = currLevel - prevLevel;
 
-          if (drop > 20) {
+          if (drop > 15) {  // Lowered to 15 dB (professional standard)
             analysis.problemFrequencies.push({
               frequency: currFreq,
               ear: ear,

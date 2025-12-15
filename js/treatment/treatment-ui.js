@@ -7,9 +7,14 @@
 class TreatmentUI {
   constructor() {
     this.engine = new TreatmentEngine();
+    this.visualization = new VisualizationEngine();
     this.currentScreen = 'welcome';
     this.isPlaying = false;
     this.progressInterval = null;
+
+    // Download settings
+    this.downloadDuration = 5; // minutes
+    this.downloadQuality = 'high'; // 'high' or 'low'
 
     // UI Elements
     this.container = null;
@@ -72,23 +77,91 @@ class TreatmentUI {
   }
 
   /**
-   * Show error when no match data
+   * Show error when no match data - WITH MANUAL INPUT OPTION
    */
   showNoMatchError() {
     this.container.innerHTML = `
       <div class="screen active">
-        <div class="card error-card">
-          <h2>⚠️ Sin datos de frecuencia</h2>
+        <div class="card">
+          <h2 class="mb-4">⚠️ Sin datos de frecuencia</h2>
           <p class="mb-6">
             No se encontró información sobre tu frecuencia de tinnitus.
-            Por favor, completa primero el módulo de búsqueda de frecuencia.
+            Puedes completar el módulo de búsqueda o ingresar manualmente la frecuencia para probar tratamientos.
           </p>
-          <a href="matching.html" class="btn btn-primary">
-            Ir a Búsqueda de Frecuencia
-          </a>
+
+          <!-- Manual Frequency Input -->
+          <div class="card bg-light mb-6">
+            <h3 class="font-bold mb-4">🎯 Ingresar Frecuencia Manualmente</h3>
+            <p class="text-sm text-gray-600 mb-4">
+              Ingresa la frecuencia aproximada de tu tinnitus (en Hz) para probar los tratamientos:
+            </p>
+
+            <div class="mb-4">
+              <label class="label">Frecuencia (Hz)</label>
+              <input type="number"
+                     id="manual-frequency"
+                     class="input"
+                     min="20"
+                     max="20000"
+                     value="4000"
+                     step="10"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 6px; font-size: 1rem;">
+              <div class="text-sm text-gray-600 mt-2">
+                Rango común de tinnitus: 3000-8000 Hz
+              </div>
+            </div>
+
+            <button class="btn btn-success w-full" onclick="treatmentUI.startWithManualFrequency()">
+              ✓ Usar Esta Frecuencia y Probar Tratamientos
+            </button>
+          </div>
+
+          <!-- Or go to matching -->
+          <div class="text-center">
+            <p class="text-sm text-gray-600 mb-3">O completa la búsqueda precisa:</p>
+            <a href="matching.html" class="btn btn-primary">
+              Ir a Búsqueda de Frecuencia →
+            </a>
+          </div>
         </div>
       </div>
     `;
+  }
+
+  /**
+   * Start with manual frequency
+   */
+  async startWithManualFrequency() {
+    const input = document.getElementById('manual-frequency');
+    const frequency = parseInt(input.value);
+
+    if (!frequency || frequency < 20 || frequency > 20000) {
+      alert('Por favor ingresa una frecuencia válida entre 20 y 20000 Hz');
+      return;
+    }
+
+    Logger.info('treatment-ui', `🎯 Usuario ingresó frecuencia manual: ${frequency} Hz`);
+
+    // Create temporary match data
+    const manualMatchData = {
+      frequency: frequency,
+      confidence: 0,
+      volume: 0.3,
+      waveType: 'sine',
+      validationScore: 'N/A',
+      ear: 'both',
+      manual: true,
+      timestamp: new Date().toISOString()
+    };
+
+    // Save to storage (optional)
+    Storage.saveTinnitusMatch(manualMatchData);
+
+    // Initialize engine
+    await this.engine.initialize(frequency);
+
+    // Show welcome screen
+    this.showWelcomeScreen();
   }
 
   /**
@@ -96,6 +169,7 @@ class TreatmentUI {
    */
   showWelcomeScreen() {
     const matchData = Storage.getTinnitusMatch();
+    const isManual = matchData.manual || false;
 
     this.container.innerHTML = `
       <div class="screen active" id="welcome-screen">
@@ -105,10 +179,19 @@ class TreatmentUI {
         </div>
 
         <div class="card mb-6">
-          <h3 class="text-xl font-bold mb-3">Tu Frecuencia de Tinnitus</h3>
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xl font-bold">Tu Frecuencia de Tinnitus</h3>
+            <button class="btn btn-outline btn-sm" onclick="treatmentUI.editFrequency()">
+              ✏️ Editar
+            </button>
+          </div>
           <div class="frequency-display">
             <div class="frequency-value">${matchData.frequency} Hz</div>
-            <div class="frequency-label">Confianza: ${matchData.confidence}%</div>
+            <div class="frequency-label">
+              ${isManual
+                ? '⚠️ Frecuencia ingresada manualmente'
+                : `Confianza: ${matchData.confidence}%`}
+            </div>
           </div>
         </div>
 
@@ -123,6 +206,16 @@ class TreatmentUI {
             ${this.renderTherapyCard('cr')}
             ${this.renderTherapyCard('masking')}
             ${this.renderTherapyCard('ambient')}
+          </div>
+
+          <h3 class="font-bold text-xl mt-6 mb-4">🎭 Terapias Híbridas (Combinadas)</h3>
+          <p class="text-sm text-gray-600 mb-4">
+            Combinaciones de terapias científicas con sonidos relajantes para mejor adherencia.
+          </p>
+
+          <div class="therapy-grid">
+            ${this.renderTherapyCard('hybrid-notched-ambient')}
+            ${this.renderTherapyCard('hybrid-cr-ambient')}
           </div>
         </div>
 
@@ -150,7 +243,9 @@ class TreatmentUI {
       notched: '🔇',
       cr: '🎵',
       masking: '🌊',
-      ambient: '🌲'
+      ambient: '🌲',
+      'hybrid-notched-ambient': '🎭',
+      'hybrid-cr-ambient': '🎼'
     };
 
     const effectivenessClass = {
@@ -187,6 +282,18 @@ class TreatmentUI {
    */
   async selectTherapy(therapyType) {
     this.currentTherapy = therapyType;
+    // Initialize default duration based on therapy type
+    this.sessionDuration = (therapyType === 'cr') ? 60 : 30;
+    // Initialize default subtype
+    if (therapyType === 'masking') {
+      this.currentSubType = 'white';
+    } else if (therapyType === 'ambient') {
+      this.currentSubType = 'rain';
+    } else if (therapyType === 'hybrid-notched-ambient' || therapyType === 'hybrid-cr-ambient') {
+      this.currentSubType = 'rain';
+    } else {
+      this.currentSubType = null;
+    }
     this.showSessionScreen(therapyType);
   }
 
@@ -261,6 +368,41 @@ class TreatmentUI {
             <div class="volume-display" id="volume-display">30%</div>
           </div>
 
+          <!-- Frequency Fine-Tuning -->
+          <div class="mb-6">
+            <label class="label">🎯 Ajuste Fino de Frecuencia</label>
+            <p class="text-xs text-gray-600 mb-2">
+              Ajusta la frecuencia en tiempo real para encontrar el tono exacto de tu tinnitus (±5%)
+            </p>
+            <input type="range"
+                   id="frequency-slider"
+                   class="slider"
+                   min="-5"
+                   max="5"
+                   value="0"
+                   step="0.1"
+                   oninput="treatmentUI.updateFrequencyAdjustment(this.value)">
+            <div class="frequency-adjustment-display">
+              <div class="text-center mt-2">
+                <span class="text-sm text-gray-600">Frecuencia Base:</span>
+                <span class="font-bold text-lg" id="base-frequency-display">${matchData.frequency} Hz</span>
+              </div>
+              <div class="text-center mt-1">
+                <span class="text-sm text-gray-600">Ajuste:</span>
+                <span class="font-bold text-xl text-primary-blue" id="frequency-adjustment-display">0%</span>
+              </div>
+              <div class="text-center mt-1">
+                <span class="text-sm text-gray-600">Frecuencia Actual:</span>
+                <span class="font-bold text-2xl text-success" id="current-frequency-display">${matchData.frequency} Hz</span>
+              </div>
+            </div>
+            <div class="slider-labels mt-2">
+              <span>-5%</span>
+              <span>0%</span>
+              <span>+5%</span>
+            </div>
+          </div>
+
           <!-- Play/Pause Control -->
           <div class="play-control mb-4">
             <button id="play-button"
@@ -269,6 +411,59 @@ class TreatmentUI {
               <span id="play-icon">▶</span>
               <span id="play-text">Iniciar Sesión</span>
             </button>
+          </div>
+
+          <!-- Download Audio Section -->
+          <div class="download-section mt-6">
+            <h4 class="font-bold mb-3">📥 Descargar Audio de Terapia</h4>
+            <p class="text-xs text-gray-600 mb-3">
+              Genera y descarga un archivo de audio con tu configuración actual (sonido, frecuencia, volumen)
+            </p>
+
+            <div class="download-options">
+              <!-- Duration Selection -->
+              <div class="mb-3">
+                <label class="label text-sm">Duración</label>
+                <div class="button-group-inline">
+                  <button class="btn btn-outline btn-sm download-duration-btn active" data-duration="5" onclick="treatmentUI.setDownloadDuration(5)">
+                    5 min
+                  </button>
+                  <button class="btn btn-outline btn-sm download-duration-btn" data-duration="10" onclick="treatmentUI.setDownloadDuration(10)">
+                    10 min
+                  </button>
+                  <button class="btn btn-outline btn-sm download-duration-btn" data-duration="15" onclick="treatmentUI.setDownloadDuration(15)">
+                    15 min
+                  </button>
+                  <button class="btn btn-outline btn-sm download-duration-btn" data-duration="30" onclick="treatmentUI.setDownloadDuration(30)">
+                    30 min
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quality Selection -->
+              <div class="mb-3">
+                <label class="label text-sm">Calidad</label>
+                <div class="button-group-inline">
+                  <button class="btn btn-outline btn-sm download-quality-btn active" data-quality="high" onclick="treatmentUI.setDownloadQuality('high')">
+                    🎧 Alta (44.1 kHz)
+                  </button>
+                  <button class="btn btn-outline btn-sm download-quality-btn" data-quality="low" onclick="treatmentUI.setDownloadQuality('low')">
+                    📱 Baja (22 kHz)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Download Button -->
+              <button id="download-button"
+                      class="btn btn-success w-full"
+                      onclick="treatmentUI.downloadAudio()">
+                <span>💾 Descargar Audio WAV</span>
+              </button>
+
+              <p class="text-xs text-gray-500 mt-2 text-center">
+                <span id="download-info">5 min • Alta calidad • Aprox. 50 MB</span>
+              </p>
+            </div>
           </div>
 
           <!-- Progress Bar -->
@@ -281,6 +476,28 @@ class TreatmentUI {
               <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
             </div>
             <div class="progress-percentage" id="progress-percentage">0%</div>
+          </div>
+
+          <!-- Visualization Canvas -->
+          <div class="visualization-container" id="visualization-container" style="display: none;">
+            <div class="visualization-header">
+              <h4 class="font-bold">🎨 Visualización Relajante</h4>
+              <div class="visualization-controls">
+                <select id="visualization-type" class="visualization-select" onchange="treatmentUI.changeVisualization(this.value)">
+                  <option value="fractal">Fractal</option>
+                  <option value="waves">Ondas</option>
+                  <option value="particles">Partículas</option>
+                  <option value="mandala">Mandala</option>
+                  <option value="aurora">Aurora</option>
+                </select>
+                <button id="fullscreen-btn" class="btn btn-sm btn-secondary" onclick="treatmentUI.toggleVisualizationFullscreen()">
+                  <span id="fullscreen-icon">⛶</span> Pantalla Completa
+                </button>
+              </div>
+            </div>
+            <div class="canvas-wrapper">
+              <canvas id="visualization-canvas"></canvas>
+            </div>
           </div>
         </div>
 
@@ -302,41 +519,162 @@ class TreatmentUI {
   renderSubTypeSelector(therapyType) {
     if (therapyType === 'masking') {
       return `
-        <div class="card mb-6">
-          <h3 class="font-bold mb-3">Tipo de Ruido</h3>
-          <div class="button-group-inline">
-            <button class="btn btn-outline active" data-subtype="white" onclick="treatmentUI.selectSubType('white', this)">
-              Ruido Blanco
+        <div class="card mb-6" id="subtype-selector">
+          <h3 class="font-bold mb-3">Tipo de Ruido (7 opciones)</h3>
+          <p class="text-sm text-gray-600 mb-3">
+            Cada tipo de ruido tiene características espectrales únicas para enmascarar diferentes frecuencias de tinnitus.
+          </p>
+          <div class="alert alert-info mb-3" style="display: none;" id="change-hint">
+            💡 <strong>Puedes cambiar el sonido en cualquier momento durante la sesión</strong> - el tiempo no se reinicia.
+          </div>
+          <div class="button-group-inline" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem;">
+            <button class="btn btn-outline btn-sm active" data-subtype="white" onclick="treatmentUI.selectSubType('white', this)">
+              ⚪ Blanco
             </button>
-            <button class="btn btn-outline" data-subtype="pink" onclick="treatmentUI.selectSubType('pink', this)">
-              Ruido Rosa
+            <button class="btn btn-outline btn-sm" data-subtype="pink" onclick="treatmentUI.selectSubType('pink', this)">
+              🌸 Rosa
             </button>
-            <button class="btn btn-outline" data-subtype="brown" onclick="treatmentUI.selectSubType('brown', this)">
-              Ruido Marrón
+            <button class="btn btn-outline btn-sm" data-subtype="brown" onclick="treatmentUI.selectSubType('brown', this)">
+              🟤 Marrón
             </button>
-            <button class="btn btn-outline" data-subtype="narrowband" onclick="treatmentUI.selectSubType('narrowband', this)">
-              Banda Estrecha
+            <button class="btn btn-outline btn-sm" data-subtype="blue" onclick="treatmentUI.selectSubType('blue', this)">
+              🔵 Azul
             </button>
+            <button class="btn btn-outline btn-sm" data-subtype="violet" onclick="treatmentUI.selectSubType('violet', this)">
+              🟣 Violeta
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="red" onclick="treatmentUI.selectSubType('red', this)">
+              🔴 Rojo
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="narrowband" onclick="treatmentUI.selectSubType('narrowband', this)">
+              📊 Banda Estrecha
+            </button>
+          </div>
+          <div class="text-xs text-gray-600 mt-3">
+            <strong>Recomendaciones:</strong><br>
+            • <strong>Blanco/Rosa:</strong> Enmascaramiento general<br>
+            • <strong>Marrón/Rojo:</strong> Tinnitus de baja frecuencia<br>
+            • <strong>Azul/Violeta:</strong> Tinnitus de alta frecuencia<br>
+            • <strong>Banda Estrecha:</strong> Enmascaramiento específico centrado en tu frecuencia
           </div>
         </div>
       `;
     } else if (therapyType === 'ambient') {
       return `
-        <div class="card mb-6">
-          <h3 class="font-bold mb-3">Sonido Ambiental</h3>
-          <div class="button-group-inline">
-            <button class="btn btn-outline active" data-subtype="rain" onclick="treatmentUI.selectSubType('rain', this)">
+        <div class="card mb-6" id="subtype-selector">
+          <h3 class="font-bold mb-3">Sonido Ambiental (10 opciones)</h3>
+          <p class="text-sm text-gray-600 mb-3">
+            Sonidos naturales sintetizados para relajación y enmascaramiento suave del tinnitus.
+          </p>
+          <div class="alert alert-info mb-3" style="display: none;" id="change-hint">
+            💡 <strong>Puedes cambiar el sonido en cualquier momento durante la sesión</strong> - explora y encuentra el que más te relaje.
+          </div>
+          <div class="button-group-inline" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem;">
+            <button class="btn btn-outline btn-sm active" data-subtype="rain" onclick="treatmentUI.selectSubType('rain', this)">
               🌧️ Lluvia
             </button>
-            <button class="btn btn-outline" data-subtype="ocean" onclick="treatmentUI.selectSubType('ocean', this)">
+            <button class="btn btn-outline btn-sm" data-subtype="ocean" onclick="treatmentUI.selectSubType('ocean', this)">
               🌊 Océano
             </button>
-            <button class="btn btn-outline" data-subtype="wind" onclick="treatmentUI.selectSubType('wind', this)">
+            <button class="btn btn-outline btn-sm" data-subtype="wind" onclick="treatmentUI.selectSubType('wind', this)">
               💨 Viento
             </button>
-            <button class="btn btn-outline" data-subtype="forest" onclick="treatmentUI.selectSubType('forest', this)">
+            <button class="btn btn-outline btn-sm" data-subtype="forest" onclick="treatmentUI.selectSubType('forest', this)">
               🌲 Bosque
             </button>
+            <button class="btn btn-outline btn-sm" data-subtype="river" onclick="treatmentUI.selectSubType('river', this)">
+              🏞️ Río
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="waterfall" onclick="treatmentUI.selectSubType('waterfall', this)">
+              💦 Cascada
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="birds" onclick="treatmentUI.selectSubType('birds', this)">
+              🐦 Pájaros
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="thunder" onclick="treatmentUI.selectSubType('thunder', this)">
+              ⛈️ Tormenta
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="crickets" onclick="treatmentUI.selectSubType('crickets', this)">
+              🦗 Grillos
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="stream" onclick="treatmentUI.selectSubType('stream', this)">
+              🏔️ Arroyo
+            </button>
+          </div>
+          <div class="text-xs text-gray-600 mt-3">
+            <strong>Características:</strong><br>
+            • <strong>Agua (Lluvia, Río, Océano, Cascada, Arroyo):</strong> Ruido rosa/blanco con modulación natural<br>
+            • <strong>Naturaleza (Pájaros, Grillos, Bosque):</strong> Eventos periódicos + fondo ambiental<br>
+            • <strong>Elementos (Viento, Tormenta):</strong> Variaciones dinámicas para enmascaramiento activo
+          </div>
+        </div>
+      `;
+    } else if (therapyType === 'hybrid-notched-ambient' || therapyType === 'hybrid-cr-ambient') {
+      const therapyName = therapyType === 'hybrid-notched-ambient' ? 'Notched' : 'CR';
+      return `
+        <div class="card mb-6" id="subtype-selector">
+          <h3 class="font-bold mb-3">🎭 Sonido Ambiental para ${therapyName}</h3>
+          <p class="text-sm text-gray-600 mb-3">
+            Selecciona el sonido natural que se mezclará con la terapia ${therapyName}.
+          </p>
+          <div class="alert alert-info mb-3" style="display: none;" id="change-hint">
+            💡 <strong>Puedes cambiar el sonido en cualquier momento</strong> - encuentra tu combinación perfecta.
+          </div>
+          <div class="button-group-inline" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem;">
+            <button class="btn btn-outline btn-sm active" data-subtype="rain" onclick="treatmentUI.selectSubType('rain', this)">
+              🌧️ Lluvia
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="ocean" onclick="treatmentUI.selectSubType('ocean', this)">
+              🌊 Océano
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="forest" onclick="treatmentUI.selectSubType('forest', this)">
+              🌲 Bosque
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="river" onclick="treatmentUI.selectSubType('river', this)">
+              🏞️ Río
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="waterfall" onclick="treatmentUI.selectSubType('waterfall', this)">
+              💦 Cascada
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="wind" onclick="treatmentUI.selectSubType('wind', this)">
+              💨 Viento
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="birds" onclick="treatmentUI.selectSubType('birds', this)">
+              🐦 Pájaros
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="cafe" onclick="treatmentUI.selectSubType('cafe', this)">
+              ☕ Café
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="fan" onclick="treatmentUI.selectSubType('fan', this)">
+              🌀 Ventilador
+            </button>
+            <button class="btn btn-outline btn-sm" data-subtype="library" onclick="treatmentUI.selectSubType('library', this)">
+              📚 Biblioteca
+            </button>
+          </div>
+
+          <!-- Balance Control for Hybrid -->
+          <div class="mt-6 pt-4 border-t-2 border-gray-200">
+            <h4 class="font-bold mb-2">🎚️ Balance de Mezcla</h4>
+            <p class="text-xs text-gray-600 mb-2">
+              Ajusta la proporción entre terapia ${therapyName} y sonido ambiental
+            </p>
+            <input type="range"
+                   id="balance-slider"
+                   class="slider"
+                   min="0"
+                   max="100"
+                   value="50"
+                   step="5"
+                   oninput="treatmentUI.updateHybridBalance(this.value)">
+            <div class="slider-labels mt-2">
+              <span>100% Terapia</span>
+              <span>Balanceado</span>
+              <span>100% Ambiental</span>
+            </div>
+            <div class="text-center mt-2">
+              <span class="font-bold text-lg text-primary-blue" id="balance-display">50% Terapia / 50% Ambiental</span>
+            </div>
           </div>
         </div>
       `;
@@ -347,7 +685,7 @@ class TreatmentUI {
   /**
    * Select sub-type for therapy
    */
-  selectSubType(subType, button) {
+  async selectSubType(subType, button) {
     // Update button states
     const buttons = button.parentElement.querySelectorAll('.btn-outline');
     buttons.forEach(btn => btn.classList.remove('active'));
@@ -355,7 +693,33 @@ class TreatmentUI {
 
     // Update engine if playing
     if (this.isPlaying) {
-      this.engine.changeSubType(subType);
+      // Add visual feedback
+      const selector = document.getElementById('subtype-selector');
+      if (selector) {
+        selector.style.transition = 'all 0.3s ease';
+        selector.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+          selector.style.transform = 'scale(1)';
+        }, 300);
+      }
+
+      // Show temporary "Cambiando..." message
+      const hint = document.getElementById('change-hint');
+      if (hint) {
+        const originalText = hint.innerHTML;
+        hint.innerHTML = '🔄 <strong>Cambiando sonido...</strong>';
+        hint.style.background = 'linear-gradient(90deg, #dbeafe, #bfdbfe)';
+
+        await this.engine.changeSubType(subType);
+
+        // Restore hint after change
+        setTimeout(() => {
+          hint.innerHTML = originalText;
+          hint.style.background = '';
+        }, 1000);
+      } else {
+        await this.engine.changeSubType(subType);
+      }
     }
 
     this.currentSubType = subType;
@@ -409,6 +773,74 @@ class TreatmentUI {
   }
 
   /**
+   * Update frequency adjustment
+   */
+  updateFrequencyAdjustment(adjustmentPercent) {
+    const adjustment = parseFloat(adjustmentPercent);
+    const sign = adjustment >= 0 ? '+' : '';
+
+    // Get base frequency from match data
+    const matchData = Storage.getTinnitusMatch();
+    const baseFrequency = matchData.frequency;
+
+    // Calculate new frequency (base + adjustment%)
+    const newFrequency = Math.round(baseFrequency * (1 + adjustment / 100));
+
+    // Update displays
+    const adjustmentDisplay = document.getElementById('frequency-adjustment-display');
+    const currentFreqDisplay = document.getElementById('current-frequency-display');
+
+    if (adjustmentDisplay) {
+      adjustmentDisplay.textContent = `${sign}${adjustment.toFixed(1)}%`;
+
+      // Color code the adjustment
+      if (adjustment > 0) {
+        adjustmentDisplay.style.color = 'var(--success)';
+      } else if (adjustment < 0) {
+        adjustmentDisplay.style.color = 'var(--warning)';
+      } else {
+        adjustmentDisplay.style.color = 'var(--primary-blue)';
+      }
+    }
+
+    if (currentFreqDisplay) {
+      currentFreqDisplay.textContent = `${newFrequency} Hz`;
+      currentFreqDisplay.style.transition = 'transform 0.2s ease';
+
+      // Animate when changing
+      currentFreqDisplay.style.transform = 'scale(1.1)';
+      setTimeout(() => {
+        currentFreqDisplay.style.transform = 'scale(1)';
+      }, 200);
+    }
+
+    // Update engine frequency if playing
+    if (this.isPlaying) {
+      this.engine.updateFrequency(newFrequency);
+    }
+
+    Logger.info('treatment-ui', `🎯 Ajuste de frecuencia: ${baseFrequency} Hz → ${newFrequency} Hz (${sign}${adjustment.toFixed(1)}%)`);
+  }
+
+  /**
+   * Update hybrid therapy balance
+   */
+  updateHybridBalance(value) {
+    const balance = parseFloat(value) / 100; // Convert 0-100 to 0-1
+    this.engine.setHybridBalance(balance);
+
+    // Update display
+    const balanceDisplay = document.getElementById('balance-display');
+    if (balanceDisplay) {
+      const therapyPercent = Math.round((1 - balance) * 100);
+      const ambientPercent = Math.round(balance * 100);
+      balanceDisplay.textContent = `${therapyPercent}% Terapia / ${ambientPercent}% Ambiental`;
+    }
+
+    Logger.info('treatment-ui', `🎚️ Balance híbrido: ${Math.round(balance * 100)}%`);
+  }
+
+  /**
    * Update volume display
    */
   updateVolumeDisplay(volume) {
@@ -416,6 +848,136 @@ class TreatmentUI {
     const display = document.getElementById('volume-display');
     if (display) {
       display.textContent = `${percentage}%`;
+    }
+  }
+
+  /**
+   * Set download duration
+   */
+  setDownloadDuration(minutes) {
+    this.downloadDuration = minutes;
+
+    // Update button states
+    document.querySelectorAll('.download-duration-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (parseInt(btn.dataset.duration) === minutes) {
+        btn.classList.add('active');
+      }
+    });
+
+    this.updateDownloadInfo();
+    Logger.info('treatment-ui', `📥 Duración de descarga establecida: ${minutes} minutos`);
+  }
+
+  /**
+   * Set download quality
+   */
+  setDownloadQuality(quality) {
+    this.downloadQuality = quality;
+
+    // Update button states
+    document.querySelectorAll('.download-quality-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.quality === quality) {
+        btn.classList.add('active');
+      }
+    });
+
+    this.updateDownloadInfo();
+    Logger.info('treatment-ui', `📥 Calidad de descarga establecida: ${quality}`);
+  }
+
+  /**
+   * Update download info display
+   */
+  updateDownloadInfo() {
+    const infoDisplay = document.getElementById('download-info');
+    if (!infoDisplay) return;
+
+    const minutes = this.downloadDuration;
+    const quality = this.downloadQuality;
+    const qualityLabel = quality === 'high' ? 'Alta calidad' : 'Baja calidad';
+
+    // Calculate approximate file size
+    // WAV file size = sample_rate * channels * bits_per_sample / 8 * duration_seconds
+    const sampleRate = quality === 'high' ? 44100 : 22050;
+    const channels = 2;
+    const bitsPerSample = 16;
+    const durationSeconds = minutes * 60;
+    const bytes = sampleRate * channels * (bitsPerSample / 8) * durationSeconds;
+    const megabytes = Math.round(bytes / (1024 * 1024));
+
+    infoDisplay.textContent = `${minutes} min • ${qualityLabel} • Aprox. ${megabytes} MB`;
+  }
+
+  /**
+   * Download audio with current settings
+   */
+  async downloadAudio() {
+    try {
+      const downloadButton = document.getElementById('download-button');
+      if (!downloadButton) return;
+
+      // Disable button and show loading state
+      downloadButton.disabled = true;
+      downloadButton.innerHTML = '<span>⏳ Generando audio...</span>';
+
+      Logger.info('treatment-ui', `📥 Iniciando descarga de audio: ${this.downloadDuration} min, calidad ${this.downloadQuality}`);
+
+      // Generate and download
+      await this.engine.generateAndDownload('wav', this.downloadDuration, this.downloadQuality);
+
+      // Success feedback
+      downloadButton.innerHTML = '<span>✅ Audio descargado</span>';
+      setTimeout(() => {
+        downloadButton.disabled = false;
+        downloadButton.innerHTML = '<span>💾 Descargar Audio WAV</span>';
+      }, 3000);
+
+      Logger.success('treatment-ui', '✅ Audio descargado exitosamente');
+    } catch (error) {
+      Logger.error('treatment-ui', `Error descargando audio: ${error.message}`);
+
+      const downloadButton = document.getElementById('download-button');
+      if (downloadButton) {
+        downloadButton.innerHTML = '<span>❌ Error al descargar</span>';
+        setTimeout(() => {
+          downloadButton.disabled = false;
+          downloadButton.innerHTML = '<span>💾 Descargar Audio WAV</span>';
+        }, 3000);
+      }
+    }
+  }
+
+  /**
+   * Change visualization type
+   */
+  changeVisualization(type) {
+    this.visualization.changeType(type);
+    Logger.info('treatment-ui', `🎨 Tipo de visualización cambiado: ${type}`);
+  }
+
+  /**
+   * Toggle visualization fullscreen
+   */
+  async toggleVisualizationFullscreen() {
+    await this.visualization.toggleFullscreen();
+
+    // Update button text
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const fullscreenIcon = document.getElementById('fullscreen-icon');
+
+    if (fullscreenBtn && fullscreenIcon) {
+      const textSpan = fullscreenBtn.querySelector('span:not(#fullscreen-icon)');
+      if (textSpan) {
+        if (this.visualization.isFullscreen) {
+          fullscreenIcon.textContent = '⛶';
+          textSpan.textContent = ' Salir de Pantalla Completa';
+        } else {
+          fullscreenIcon.textContent = '⛶';
+          textSpan.textContent = ' Pantalla Completa';
+        }
+      }
     }
   }
 
@@ -439,8 +1001,23 @@ class TreatmentUI {
     // Show progress container
     document.getElementById('progress-container').style.display = 'block';
 
-    // Start therapy
-    await this.engine.startTherapy(this.currentTherapy, duration);
+    // Initialize and show visualization
+    const visualizationContainer = document.getElementById('visualization-container');
+    if (visualizationContainer) {
+      visualizationContainer.style.display = 'block';
+
+      // Initialize visualization if not already done
+      if (!this.visualization.canvas) {
+        this.visualization.initialize('visualization-canvas');
+      }
+
+      // Start visualization with default type
+      const visualizationType = document.getElementById('visualization-type')?.value || 'fractal';
+      this.visualization.start(visualizationType);
+    }
+
+    // Start therapy with current subtype
+    await this.engine.startTherapy(this.currentTherapy, duration, this.currentSubType);
 
     this.isPlaying = true;
     this.updatePlayButton();
@@ -453,6 +1030,13 @@ class TreatmentUI {
     this.engine.stopTherapy();
     this.isPlaying = false;
     this.updatePlayButton();
+
+    // Stop and hide visualization
+    this.visualization.stop();
+    const visualizationContainer = document.getElementById('visualization-container');
+    if (visualizationContainer) {
+      visualizationContainer.style.display = 'none';
+    }
   }
 
   /**
@@ -470,11 +1054,36 @@ class TreatmentUI {
       button.classList.add('btn-danger');
       icon.textContent = '■';
       text.textContent = 'Detener Sesión';
+
+      // Show hint about changing sounds during session
+      const hint = document.getElementById('change-hint');
+      if (hint) {
+        hint.style.display = 'block';
+        hint.style.animation = 'fadeIn 0.5s ease-in';
+      }
+
+      // Add glow effect to subtype selector
+      const selector = document.getElementById('subtype-selector');
+      if (selector) {
+        selector.classList.add('playing');
+      }
     } else {
       button.classList.remove('btn-danger');
       button.classList.add('btn-primary');
       icon.textContent = '▶';
       text.textContent = 'Iniciar Sesión';
+
+      // Hide hint when not playing
+      const hint = document.getElementById('change-hint');
+      if (hint) {
+        hint.style.display = 'none';
+      }
+
+      // Remove glow effect from subtype selector
+      const selector = document.getElementById('subtype-selector');
+      if (selector) {
+        selector.classList.remove('playing');
+      }
     }
   }
 
@@ -530,11 +1139,18 @@ class TreatmentUI {
    * Show session complete modal
    */
   showSessionComplete(therapy, duration) {
+    // Remove any existing modals first
+    const existingModal = document.querySelector('.modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
     const info = this.engine.getTherapyInfo(therapy);
     const minutes = Math.round(duration / 60);
 
     const modal = document.createElement('div');
     modal.className = 'modal active';
+    modal.style.opacity = '0';
     modal.innerHTML = `
       <div class="modal-content">
         <h2 class="text-2xl font-bold mb-4">✅ Sesión Completada</h2>
@@ -550,10 +1166,10 @@ class TreatmentUI {
           Las sesiones regulares son clave para obtener mejores resultados.
         </p>
         <div class="button-group">
-          <button class="btn btn-primary" onclick="treatmentUI.closeModal(); treatmentUI.restartSession();">
+          <button class="btn btn-primary" onclick="treatmentUI.restartSession();">
             Repetir Sesión
           </button>
-          <button class="btn btn-secondary" onclick="treatmentUI.closeModal(); treatmentUI.goBack();">
+          <button class="btn btn-secondary" onclick="treatmentUI.closeModalAndGoBack();">
             Cambiar Terapia
           </button>
         </div>
@@ -561,6 +1177,12 @@ class TreatmentUI {
     `;
 
     document.body.appendChild(modal);
+
+    // Fade in animation
+    setTimeout(() => {
+      modal.style.transition = 'opacity 0.3s ease-in';
+      modal.style.opacity = '1';
+    }, 10);
   }
 
   /**
@@ -569,7 +1191,16 @@ class TreatmentUI {
   closeModal() {
     const modal = document.querySelector('.modal');
     if (modal) {
-      modal.remove();
+      // Add fade out animation
+      modal.style.opacity = '0';
+      modal.style.transition = 'opacity 0.2s ease-out';
+
+      // Remove after animation
+      setTimeout(() => {
+        if (modal && modal.parentNode) {
+          modal.remove();
+        }
+      }, 200);
     }
   }
 
@@ -577,13 +1208,41 @@ class TreatmentUI {
    * Restart session
    */
   async restartSession() {
-    // Reset progress
-    document.getElementById('progress-fill').style.width = '0%';
-    document.getElementById('progress-percentage').textContent = '0%';
-    document.getElementById('time-current').textContent = '0:00';
+    // Close modal first
+    this.closeModal();
+
+    // Wait for modal to close
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    // Reset progress with null checks
+    const progressFill = document.getElementById('progress-fill');
+    const progressPercentage = document.getElementById('progress-percentage');
+    const timeCurrent = document.getElementById('time-current');
+
+    if (progressFill) {
+      progressFill.style.width = '0%';
+    }
+    if (progressPercentage) {
+      progressPercentage.textContent = '0%';
+    }
+    if (timeCurrent) {
+      timeCurrent.textContent = '0:00';
+    }
 
     // Start new session
     await this.startSession();
+  }
+
+  /**
+   * Close modal and go back to therapy selection
+   */
+  async closeModalAndGoBack() {
+    this.closeModal();
+
+    // Wait for modal to close
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    this.goBack();
   }
 
   /**
@@ -593,6 +1252,102 @@ class TreatmentUI {
     if (this.isPlaying) {
       this.stopSession();
     }
+    this.showWelcomeScreen();
+  }
+
+  /**
+   * Edit frequency
+   */
+  editFrequency() {
+    const matchData = Storage.getTinnitusMatch();
+    const currentFreq = matchData ? matchData.frequency : 4000;
+
+    this.container.innerHTML = `
+      <div class="screen active">
+        <div class="card">
+          <h2 class="mb-4">✏️ Editar Frecuencia del Tinnitus</h2>
+          <p class="mb-6">
+            Ajusta la frecuencia para personalizar los tratamientos. Puedes probar diferentes frecuencias para encontrar la más efectiva.
+          </p>
+
+          <div class="mb-6">
+            <label class="label">Frecuencia (Hz)</label>
+            <input type="number"
+                   id="edit-frequency"
+                   class="input"
+                   min="20"
+                   max="20000"
+                   value="${currentFreq}"
+                   step="10"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 6px; font-size: 1.5rem; text-align: center; font-weight: bold;">
+
+            <div class="mt-4">
+              <label class="label">O usa estos presets comunes:</label>
+              <div class="button-group-inline">
+                <button class="btn btn-outline" onclick="document.getElementById('edit-frequency').value = 3000">
+                  3000 Hz
+                </button>
+                <button class="btn btn-outline" onclick="document.getElementById('edit-frequency').value = 4000">
+                  4000 Hz
+                </button>
+                <button class="btn btn-outline" onclick="document.getElementById('edit-frequency').value = 6000">
+                  6000 Hz
+                </button>
+                <button class="btn btn-outline" onclick="document.getElementById('edit-frequency').value = 8000">
+                  8000 Hz
+                </button>
+              </div>
+            </div>
+
+            <div class="text-sm text-gray-600 mt-3">
+              <strong>Rangos comunes de tinnitus:</strong><br>
+              • 3000-5000 Hz: Frecuencias medias<br>
+              • 5000-8000 Hz: Frecuencias altas (más común)<br>
+              • 8000-12000 Hz: Frecuencias muy altas
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-secondary flex-1" onclick="treatmentUI.showWelcomeScreen()">
+              ← Cancelar
+            </button>
+            <button class="btn btn-primary flex-1" onclick="treatmentUI.saveFrequency()">
+              ✓ Guardar Frecuencia
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Save edited frequency
+   */
+  async saveFrequency() {
+    const input = document.getElementById('edit-frequency');
+    const frequency = parseInt(input.value);
+
+    if (!frequency || frequency < 20 || frequency > 20000) {
+      alert('Por favor ingresa una frecuencia válida entre 20 y 20000 Hz');
+      return;
+    }
+
+    Logger.info('treatment-ui', `✏️ Usuario editó frecuencia a: ${frequency} Hz`);
+
+    // Update match data
+    const matchData = Storage.getTinnitusMatch() || {};
+    matchData.frequency = frequency;
+    matchData.manual = true;
+    matchData.timestamp = new Date().toISOString();
+
+    Storage.saveTinnitusMatch(matchData);
+
+    // Re-initialize engine with new frequency
+    await this.engine.initialize(frequency);
+
+    Logger.success('treatment-ui', `✅ Frecuencia actualizada a ${frequency} Hz`);
+
+    // Return to welcome screen
     this.showWelcomeScreen();
   }
 }
