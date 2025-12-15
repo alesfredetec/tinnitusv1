@@ -20,20 +20,348 @@
 
   <main class="main">
     <div class="container">
-      <div class="card">
-        <h2 class="text-center mb-6">Módulo 1: Evaluación Audiométrica</h2>
-        <p class="text-center text-secondary mb-8">
-          En desarrollo - Sprint 2
-        </p>
-        <div class="alert alert-info">
-          <strong>Próximamente:</strong> Algoritmo de audiometría adaptativo con estrategia random
-        </div>
-      </div>
+      <!-- Audiometry UI Container -->
+      <div id="audiometry-container"></div>
     </div>
   </main>
 
+  <!-- Plotly.js for Interactive Audiogram -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+
+  <!-- Core Scripts -->
+  <script src="js/logger.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/audio-context.js"></script>
+
+  <!-- Audiometry Module -->
+  <script src="js/audiometry/randomized-sequencer.js"></script>
+  <script src="js/audiometry/audiometry-engine.js"></script>
+  <script src="js/audiometry/audiometry-ui.js"></script>
+
+  <script>
+    // Initialize logger for audiometry
+    Logger.info('system', '🎧 Módulo de Audiometría cargado');
+    Logger.info('system', 'Comandos disponibles en consola:');
+    Logger.info('system', '- logger.summary() - Ver resumen de logs');
+    Logger.info('system', '- logger.download() - Descargar logs');
+    Logger.info('system', '- logger.clear() - Limpiar logs');
+    Logger.info('system', '- logger.setLevel("debug"|"info"|"warn"|"error") - Cambiar nivel');
+    Logger.info('system', '- debugStorage() - Verificar datos guardados');
+
+    // Debug function to check storage
+    window.debugStorage = function() {
+      console.group('🔍 DEBUG STORAGE');
+
+      const latest = Storage.getLatestAudiometryResults();
+      console.log('Latest audiometry results:', latest);
+
+      if (latest) {
+        console.log('✅ Datos encontrados');
+        console.log('├─ Test mode:', latest.testMode);
+        console.log('├─ Classification:', latest.classification);
+        console.log('├─ Problem frequencies:', latest.problemFrequencies);
+        console.log('└─ Timestamp:', latest.timestamp);
+
+        if (!latest.problemFrequencies) {
+          console.error('❌ PROBLEMA: problemFrequencies está undefined!');
+        } else if (latest.problemFrequencies.length === 0) {
+          console.warn('⚠️ ADVERTENCIA: problemFrequencies está vacío');
+        } else {
+          console.log(`✅ ${latest.problemFrequencies.length} problem frequencies encontradas`);
+          latest.problemFrequencies.forEach((pf, i) => {
+            console.log(`   ${i + 1}. ${pf.frequency || pf.centerFrequency} Hz - ${pf.ear}`);
+          });
+        }
+      } else {
+        console.error('❌ No se encontraron datos de audiometría');
+      }
+
+      console.groupEnd();
+      return latest;
+    };
+
+    Logger.info('system', '✅ Función debugStorage() disponible');
+  </script>
+
+  <!-- Additional Styles for Audiometry -->
+  <style>
+    /* Improved Progress Bar */
+    .progress-container {
+      width: 100%;
+      height: 12px;
+      background-color: #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      background-size: 200% 100%;
+      border-radius: 6px;
+      transition: width 0.3s ease;
+      animation: gradient-shift 3s ease infinite;
+    }
+
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* Enhanced Pulse Animation */
+    .pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+      }
+    }
+
+    /* Grid and Backgrounds */
+    .grid-cols-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .bg-blue-50 {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+
+    .bg-red-50 {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+
+    .bg-gray-100 {
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    }
+
+    .rounded {
+      border-radius: var(--radius-md);
+    }
+
+    .border {
+      border: 2px solid var(--border-color);
+    }
+
+    /* Enhanced Plotly Audiogram Container */
+    #audiogram-canvas {
+      max-width: 100%;
+      height: 500px !important;
+      min-height: 400px;
+      border-radius: 8px;
+      background: white;
+    }
+
+    /* Plotly modebar styling - Better colors and contrast */
+    .modebar {
+      padding: 8px !important;
+      background: linear-gradient(135deg, #f3f4f6, #e5e7eb) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+
+    .modebar-group {
+      background: transparent !important;
+    }
+
+    .modebar-btn {
+      border-radius: 6px !important;
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 1px solid #d1d5db !important;
+      margin: 0 2px !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .modebar-btn:hover {
+      background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+      border-color: #2563eb !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4) !important;
+    }
+
+    .modebar-btn:hover path {
+      fill: white !important;
+    }
+
+    .modebar-btn.active {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+      border-color: #7c3aed !important;
+    }
+
+    .modebar-btn.active path {
+      fill: white !important;
+    }
+
+    .modebar-btn path {
+      fill: #4b5563 !important;
+    }
+
+    /* Plotly plot background enhancements */
+    .main-svg {
+      border-radius: 8px !important;
+    }
+
+    /* Legend styling */
+    .legend {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
+    /* Improved Badge Variants */
+    .badge-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .badge-info {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .badge-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .badge-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    /* Enhanced Button Styles */
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border: none;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: none;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-warning:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      border: none;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #4b5563, #374151);
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-success:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Button Group */
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .button-group .btn {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    /* Stage Transition Badge */
+    .stage-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: white;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Test Mode Alert Enhancement */
+    .alert-info {
+      border-left: 4px solid #3b82f6;
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    }
+
+    .alert-warning {
+      border-left: 4px solid #f59e0b;
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    }
+
+    .alert-success {
+      border-left: 4px solid #10b981;
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .button-group {
+        flex-direction: column;
+      }
+
+      .button-group .btn {
+        width: 100%;
+        min-width: auto;
+      }
+
+      .grid-cols-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </body>
 </html>

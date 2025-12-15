@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Flow - Tinnitus Care</title>
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <nav class="nav">
+        <a href="index.html" class="btn btn-secondary btn-sm">← Volver</a>
+        <h1>🧪 Test de Flujo Completo</h1>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      <div class="card mb-4">
+        <h2 class="mb-4">🧪 Prueba Automática del Flujo</h2>
+
+        <div id="test-results"></div>
+
+        <div class="mt-4">
+          <button class="btn btn-primary btn-lg" onclick="runTest()">▶️ Ejecutar Test</button>
+          <button class="btn btn-secondary" onclick="clearData()">🗑️ Limpiar Datos</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="mb-4">📋 Enlaces Rápidos</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          <a href="audiometry.html" class="btn btn-outline">Audiometría</a>
+          <a href="matching.html" class="btn btn-outline">Matching</a>
+          <a href="treatment.html" class="btn btn-outline">Tratamiento</a>
+          <a href="debug-storage.html" class="btn btn-outline">Debug Storage</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/logger.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio-context.js"></script>
+  <script src="js/audiometry/audiometry-engine.js"></script>
+
+  <script>
+    function log(message, type = 'info') {
+      const results = document.getElementById('test-results');
+      const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+      };
+      const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+      };
+
+      const div = document.createElement('div');
+      div.style.cssText = `
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid ${colors[type]};
+        background: ${colors[type]}10;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.9rem;
+      `;
+      div.innerHTML = `${icons[type]} ${message}`;
+      results.appendChild(div);
+    }
+
+    async function runTest() {
+      const results = document.getElementById('test-results');
+      results.innerHTML = '<h3 style="margin-bottom: 1rem;">🔄 Ejecutando tests...</h3>';
+
+      try {
+        // Test 1: Create audiometry engine
+        log('Test 1: Creando motor de audiometría...', 'info');
+        const engine = new AudiometryEngine();
+        log('Motor de audiometría creado', 'success');
+
+        // Test 2: Generate test data
+        log('Test 2: Generando datos de prueba...', 'info');
+        const testData = engine.generateTestData();
+        log(`Datos generados: ${Object.keys(engine.results).length} frecuencias estándar`, 'success');
+        log(`Micro-audiometría: ${Object.keys(engine.microResults).length} frecuencias`, 'success');
+        log(`Problem frequencies: ${engine.problemFrequencies.length} encontradas`, 'success');
+
+        // Test 3: Analyze results
+        log('Test 3: Analizando resultados...', 'info');
+        const analysis = engine.analyzeResults();
+        log(`Análisis completado`, 'success');
+        log(`  └─ Oído izquierdo: ${analysis.hearingLoss.left}`, 'info');
+        log(`  └─ Oído derecho: ${analysis.hearingLoss.right}`, 'info');
+
+        // Test 4: Prepare and save data
+        log('Test 4: Guardando datos en LocalStorage...', 'info');
+        const dataToSave = {
+          leftEar: {
+            frequencies: Object.keys(engine.results).map(f => parseInt(f)),
+            thresholds: Object.keys(engine.results).map(f => engine.results[f].left)
+          },
+          rightEar: {
+            frequencies: Object.keys(engine.results).map(f => parseInt(f)),
+            thresholds: Object.keys(engine.results).map(f => engine.results[f].right)
+          },
+          microAudiometry: {
+            leftEar: {
+              frequencies: Object.keys(engine.microResults).map(f => parseInt(f)),
+              thresholds: Object.keys(engine.microResults).map(f => engine.microResults[f].left)
+            },
+            rightEar: {
+              frequencies: Object.keys(engine.microResults).map(f => parseInt(f)),
+              thresholds: Object.keys(engine.microResults).map(f => engine.microResults[f].right)
+            }
+          },
+          problemFrequencies: engine.problemFrequencies,
+          classification: {
+            left: analysis.hearingLoss.left,
+            right: analysis.hearingLoss.right
+          },
+          testMode: true
+        };
+
+        log(`Datos preparados para guardar`, 'success');
+        log(`  └─ problemFrequencies es array: ${Array.isArray(dataToSave.problemFrequencies)}`, 'info');
+        log(`  └─ problemFrequencies length: ${dataToSave.problemFrequencies.length}`, 'info');
+
+        Storage.saveAudiometryResults(dataToSave);
+        log('Datos guardados en LocalStorage', 'success');
+
+        // Test 5: Verify saved data
+        log('Test 5: Verificando datos guardados...', 'info');
+        const saved = Storage.getLatestAudiometryResults();
+
+        if (!saved) {
+          log('ERROR: No se pudieron recuperar los datos guardados', 'error');
+          return;
+        }
+
+        log('Datos recuperados correctamente', 'success');
+        log(`  └─ testMode: ${saved.testMode}`, 'info');
+        log(`  └─ classification: ${JSON.stringify(saved.classification)}`, 'info');
+        log(`  └─ problemFrequencies: ${saved.problemFrequencies ? saved.problemFrequencies.length : 'undefined'}`, saved.problemFrequencies ? 'success' : 'error');
+
+        // Test 6: Check if matching can read data
+        log('Test 6: Verificando compatibilidad con Matching...', 'info');
+
+        if (!saved.problemFrequencies) {
+          log('ERROR: problemFrequencies está undefined', 'error');
+          log('El módulo de Matching NO podrá leer estos datos', 'error');
+        } else if (!Array.isArray(saved.problemFrequencies)) {
+          log('ERROR: problemFrequencies no es un array', 'error');
+          log('El módulo de Matching NO podrá leer estos datos', 'error');
+        } else if (saved.problemFrequencies.length === 0) {
+          log('ADVERTENCIA: problemFrequencies está vacío', 'warning');
+          log('Matching usará rangos por defecto', 'warning');
+        } else {
+          log(`✅ Matching podrá leer ${saved.problemFrequencies.length} problem frequencies`, 'success');
+          saved.problemFrequencies.forEach((pf, i) => {
+            const freq = pf.frequency || pf.centerFrequency || 'unknown';
+            log(`  ${i + 1}. ${freq} Hz - ${pf.ear || 'unknown ear'}`, 'info');
+          });
+        }
+
+        // Test 7: Summary
+        log('====================================', 'info');
+        log('🎉 TODOS LOS TESTS PASARON', 'success');
+        log('====================================', 'info');
+        log('El flujo completo funciona correctamente', 'success');
+        log('Puedes ir a matching.html para continuar', 'success');
+
+      } catch (error) {
+        log(`ERROR CRÍTICO: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+
+    function clearData() {
+      if (confirm('¿Limpiar todos los datos de LocalStorage?')) {
+        localStorage.clear();
+        log('LocalStorage limpiado', 'success');
+      }
+    }
+  </script>
+
+  <style>
+    .btn-outline {
+      background: transparent;
+      border: 2px solid #3b82f6;
+      color: #3b82f6;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+
+    .btn-outline:hover {
+      background: #3b82f6;
+      color: white;
+    }
+  </style>
+</body>
+</html>

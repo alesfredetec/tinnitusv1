@@ -223,7 +223,7 @@ const AudioContextManager = (() => {
     filter.frequency.value = frequency;
     filter.Q.value = Q;
     return filter;
-  },
+  }
 
   /**
    * Create stereo panner node
@@ -236,7 +236,7 @@ const AudioContextManager = (() => {
     const panner = audioContext.createStereoPanner();
     panner.pan.value = Math.max(-1, Math.min(1, pan));
     return panner;
-  },
+  }
 
   /**
    * Create audio buffer from array
@@ -258,7 +258,7 @@ const AudioContextManager = (() => {
     }
 
     return buffer;
-  },
+  }
 
   /**
    * Play a simple tone
@@ -268,13 +268,13 @@ const AudioContextManager = (() => {
    * @param {number} volume - Volume (0-1)
    * @returns {Promise}
    */
-  async function playTone(frequency = 440, duration = 1, volume = 0.3) {
+  async function playTone(frequency = 440, duration = 1, volume = 0.3, type = 'sine') {
     if (!isReady()) {
       await resume();
     }
 
     return new Promise((resolve) => {
-      const oscillator = createOscillator(frequency);
+      const oscillator = createOscillator(frequency, type);
       const gainNode = createGain(0);
 
       oscillator.connect(gainNode);
