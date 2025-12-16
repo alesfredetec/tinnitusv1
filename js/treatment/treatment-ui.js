@@ -294,6 +294,11 @@ class TreatmentUI {
     } else {
       this.currentSubType = null;
     }
+
+    // IMPORTANT: Set therapy type in engine so downloads work without starting session
+    this.engine.currentTherapy = therapyType;
+    this.engine.currentSubType = this.currentSubType;
+
     this.showSessionScreen(therapyType);
   }
 
@@ -366,6 +371,30 @@ class TreatmentUI {
                    value="30"
                    oninput="treatmentUI.updateVolume(this.value)">
             <div class="volume-display" id="volume-display">30%</div>
+          </div>
+
+          <!-- Stereo Balance Control -->
+          <div class="mb-6">
+            <label class="label">🎧 Balance Estéreo (Izquierda ↔ Derecha)</label>
+            <p class="text-xs text-gray-600 mb-2">
+              Ajusta el balance entre oído izquierdo y derecho. Útil para tinnitus unilateral o asimétrico.
+            </p>
+            <input type="range"
+                   id="stereo-balance-slider"
+                   class="slider"
+                   min="-100"
+                   max="100"
+                   value="0"
+                   step="5"
+                   oninput="treatmentUI.updateStereoBalance(this.value)">
+            <div class="slider-labels mt-2">
+              <span>100% Izq</span>
+              <span>Centro</span>
+              <span>100% Der</span>
+            </div>
+            <div class="text-center mt-2">
+              <span class="font-bold text-lg text-primary-blue" id="stereo-balance-display">Centro (0)</span>
+            </div>
           </div>
 
           <!-- Frequency Fine-Tuning -->
@@ -720,6 +749,9 @@ class TreatmentUI {
       } else {
         await this.engine.changeSubType(subType);
       }
+    } else {
+      // Not playing yet - just update engine's currentSubType for downloads
+      this.engine.currentSubType = subType;
     }
 
     this.currentSubType = subType;
@@ -770,6 +802,35 @@ class TreatmentUI {
   updateVolume(value) {
     const volume = value / 100;
     this.engine.setVolume(volume);
+  }
+
+  /**
+   * Update stereo balance (L-R)
+   */
+  updateStereoBalance(value) {
+    const balance = parseInt(value);
+
+    // Update display
+    const display = document.getElementById('stereo-balance-display');
+    if (display) {
+      let text = '';
+      if (balance < -10) {
+        text = `Izquierda (${balance})`;
+        display.style.color = 'var(--warning)';
+      } else if (balance > 10) {
+        text = `Derecha (+${balance})`;
+        display.style.color = 'var(--success)';
+      } else {
+        text = `Centro (${balance})`;
+        display.style.color = 'var(--primary-blue)';
+      }
+      display.textContent = text;
+    }
+
+    // Update engine balance
+    this.engine.setStereoBalance(balance / 100); // Convert to -1.0 to 1.0 range
+
+    Logger.info('treatment-ui', `🎧 Balance estéreo ajustado: ${balance} (${balance < 0 ? 'Izquierda' : balance > 0 ? 'Derecha' : 'Centro'})`);
   }
 
   /**
@@ -998,29 +1059,45 @@ class TreatmentUI {
   async startSession() {
     const duration = this.sessionDuration || 30;
 
+    Logger.info('treatment-ui', `▶️ Iniciando sesión - Terapia: ${this.currentTherapy}, SubTipo: ${this.currentSubType || 'ninguno'}, Duración: ${duration}min`);
+
     // Show progress container
     document.getElementById('progress-container').style.display = 'block';
 
     // Initialize and show visualization
     const visualizationContainer = document.getElementById('visualization-container');
+    Logger.debug('treatment-ui', `Visualization container encontrado: ${visualizationContainer ? 'SI' : 'NO'}`);
+
     if (visualizationContainer) {
+      Logger.debug('treatment-ui', `Mostrando visualization container...`);
       visualizationContainer.style.display = 'block';
 
       // Initialize visualization if not already done
       if (!this.visualization.canvas) {
-        this.visualization.initialize('visualization-canvas');
+        Logger.debug('treatment-ui', `Inicializando visualization engine...`);
+        const initSuccess = this.visualization.initialize('visualization-canvas');
+        Logger.debug('treatment-ui', `Visualization inicializado: ${initSuccess ? 'EXITO' : 'FALLO'}`);
+      } else {
+        Logger.debug('treatment-ui', `Visualization ya estaba inicializado (canvas existe)`);
       }
 
       // Start visualization with default type
       const visualizationType = document.getElementById('visualization-type')?.value || 'fractal';
+      Logger.debug('treatment-ui', `Iniciando visualization tipo: ${visualizationType}`);
       this.visualization.start(visualizationType);
+      Logger.success('treatment-ui', `✅ Visualization debería estar visible ahora`);
+    } else {
+      Logger.error('treatment-ui', `❌ NO SE ENCONTRÓ visualization-container en el DOM`);
     }
 
     // Start therapy with current subtype
+    Logger.debug('treatment-ui', `Llamando engine.startTherapy()...`);
     await this.engine.startTherapy(this.currentTherapy, duration, this.currentSubType);
 
     this.isPlaying = true;
     this.updatePlayButton();
+
+    Logger.success('treatment-ui', `✅ Sesión iniciada completamente`);
   }
 
   /**

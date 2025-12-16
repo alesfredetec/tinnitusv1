@@ -57,7 +57,21 @@ class VisualizationEngine {
     }
 
     this.ctx = this.canvas.getContext('2d');
+    if (!this.ctx) {
+      Logger.error('visualization', 'No se pudo obtener contexto 2D del canvas');
+      return false;
+    }
+
     this.resize();
+
+    // Verify canvas has valid dimensions
+    if (this.canvas.width === 0 || this.canvas.height === 0) {
+      Logger.warn('visualization', `Canvas tiene dimensiones inválidas: ${this.canvas.width}x${this.canvas.height}`);
+      // Force minimum dimensions
+      this.canvas.width = 800;
+      this.canvas.height = 400;
+      Logger.info('visualization', `Dimensiones forzadas a: ${this.canvas.width}x${this.canvas.height}`);
+    }
 
     // Handle window resize
     window.addEventListener('resize', () => this.resize());
@@ -115,6 +129,11 @@ class VisualizationEngine {
    * Start visualization
    */
   start(type = 'fractal') {
+    if (!this.canvas || !this.ctx) {
+      Logger.error('visualization', 'Cannot start: canvas or context not initialized');
+      return;
+    }
+
     if (this.isPlaying) {
       this.stop();
     }
@@ -123,13 +142,30 @@ class VisualizationEngine {
     this.isPlaying = true;
     this.time = 0;
 
+    Logger.info('visualization', `🎨 Iniciando visualización: ${type}`);
+    Logger.debug('visualization', `Canvas dimensiones: ${this.canvas.width}x${this.canvas.height}`);
+
+    // Debug: Check canvas visibility
+    const computedStyle = window.getComputedStyle(this.canvas);
+    const parentStyle = window.getComputedStyle(this.canvas.parentElement);
+    Logger.debug('visualization', `Canvas display: ${computedStyle.display}, visibility: ${computedStyle.visibility}, opacity: ${computedStyle.opacity}`);
+    Logger.debug('visualization', `Parent (canvas-wrapper) display: ${parentStyle.display}, visibility: ${parentStyle.visibility}`);
+
+    const container = document.getElementById('visualization-container');
+    if (container) {
+      const containerStyle = window.getComputedStyle(container);
+      Logger.debug('visualization', `Container display: ${containerStyle.display}, visibility: ${containerStyle.visibility}`);
+    } else {
+      Logger.warn('visualization', `Container 'visualization-container' no encontrado en el DOM`);
+    }
+
     // Initialize type-specific elements
     if (type === 'particles') {
       this.initParticles();
     }
 
     this.animate();
-    Logger.info('visualization', `🎨 Visualización iniciada: ${type}`);
+    Logger.success('visualization', `✅ Visualización ${type} iniciada correctamente`);
   }
 
   /**
@@ -161,7 +197,32 @@ class VisualizationEngine {
    * Toggle fullscreen
    */
   async toggleFullscreen() {
-    if (!this.canvas) return;
+    if (!this.canvas) {
+      Logger.error('visualization', 'No se puede activar fullscreen: canvas no existe');
+      return;
+    }
+
+    // Verify canvas is connected to DOM
+    if (!document.body.contains(this.canvas)) {
+      Logger.error('visualization', 'No se puede activar fullscreen: canvas no está conectado al DOM');
+      Logger.debug('visualization', 'Verificando estructura DOM...');
+
+      const container = document.getElementById('visualization-container');
+      if (container) {
+        Logger.debug('visualization', `Container existe: ${container.style.display}`);
+        const wrapper = container.querySelector('.canvas-wrapper');
+        if (wrapper) {
+          Logger.debug('visualization', `Wrapper existe, buscando canvas...`);
+          const canvasInDom = wrapper.querySelector('#visualization-canvas');
+          Logger.debug('visualization', `Canvas en DOM: ${canvasInDom ? 'SI' : 'NO'}`);
+        } else {
+          Logger.error('visualization', 'Canvas wrapper no encontrado');
+        }
+      } else {
+        Logger.error('visualization', 'Visualization container no encontrado');
+      }
+      return;
+    }
 
     const isCurrentlyFullscreen = !!(document.fullscreenElement ||
                                      document.webkitFullscreenElement ||
@@ -170,6 +231,9 @@ class VisualizationEngine {
 
     if (!isCurrentlyFullscreen) {
       try {
+        Logger.debug('visualization', 'Intentando activar fullscreen...');
+        Logger.debug('visualization', `Canvas: ${this.canvas.width}x${this.canvas.height}, isConnected: ${this.canvas.isConnected}`);
+
         // Request fullscreen on canvas
         if (this.canvas.requestFullscreen) {
           await this.canvas.requestFullscreen();
@@ -180,12 +244,13 @@ class VisualizationEngine {
         } else if (this.canvas.msRequestFullscreen) {
           await this.canvas.msRequestFullscreen();
         } else {
-          Logger.error('visualization', 'Fullscreen API no soportada');
+          Logger.error('visualization', 'Fullscreen API no soportada en este navegador');
           return;
         }
         Logger.info('visualization', '🖥️ Solicitando modo fullscreen');
       } catch (error) {
         Logger.error('visualization', `Error activando fullscreen: ${error.message}`);
+        Logger.debug('visualization', `Error completo: ${error.stack || error}`);
       }
     } else {
       try {

@@ -1,0 +1,114 @@
+================================================================================
+  INSTRUCCIONES PARA AGREGAR ARCHIVOS DEMO
+================================================================================
+
+Esta carpeta debe contener los siguientes archivos para que la landing page
+funcione completamente:
+
+📁 ARCHIVOS DE AUDIO WAV (Requeridos)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Los siguientes archivos WAV deben generarse usando la aplicación:
+
+✓ notched_4105hz_15min.wav           (~150 MB)
+✓ cr_8200hz_30min.wav                (~300 MB)
+✓ hybrid_notched_rain_2850hz_15min.wav  (~150 MB)
+✓ hybrid_cr_ocean_5600hz_30min.wav   (~300 MB)
+✓ masking_pink_6300hz_10min.wav      (~100 MB)
+✓ ambient_forest_relaxation_15min.wav  (~150 MB)
+
+CÓMO GENERAR:
+1. Completar matching de tinnitus con la frecuencia indicada
+2. Seleccionar el tipo de terapia apropiado
+3. Configurar opciones (duración, calidad, sonido ambiental si aplica)
+4. Descargar audio
+5. Renombrar archivo según convención arriba
+
+
+📸 CAPTURAS DE PANTALLA (Requeridas)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Formato: PNG o JPG
+Resolución: 1920x1080 (Full HD) o 1280x720 (HD)
+
+✓ 01_landing_page.png          - Captura de index.html
+✓ 02_audiometry_test.png       - Durante test de audiometría
+✓ 03_audiometry_results.png    - Audiograma completo
+✓ 04_matching_search.png       - Búsqueda de frecuencia
+✓ 05_matching_validation.png   - Tests A/B de validación
+✓ 06_treatment_selection.png   - Pantalla de selección de terapia
+✓ 07_treatment_hybrid_session.png - Sesión activa con controles
+✓ 08_treatment_visualization.png  - Visualización en pantalla completa
+
+CÓMO CAPTURAR:
+1. Usar F12 (DevTools) para responsive design mode (1920x1080)
+2. Navegar a la pantalla correspondiente
+3. Capturar con Snipping Tool, Lightshot, o similar
+4. Guardar como PNG con el nombre indicado
+
+
+🎬 VIDEOS DEMOSTRATIVOS (Opcionales pero recomendados)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Formato: MP4 (H.264)
+Resolución: 1920x1080 @ 30fps
+Codec de audio: AAC
+
+✓ demo_complete_flow.mp4           (3-5 min)
+✓ demo_hybrid_therapy_session.mp4  (1-2 min)
+✓ demo_visualization_modes.mp4     (30-45 seg)
+✓ demo_audio_download.mp4          (30 seg)
+
+CÓMO GRABAR:
+1. Usar OBS Studio, Camtasia, o similar
+2. Grabar en 1920x1080 @ 30fps
+3. Exportar como MP4 (H.264 + AAC)
+4. Mantener tamaño de archivo razonable (<50 MB por video si es posible)
+
+
+📋 CHECKLIST DE VERIFICACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Antes de publicar, verificar:
+
+□ Todos los archivos WAV están presentes y reproducen correctamente
+□ Todas las capturas de pantalla están en alta resolución
+□ Los nombres de archivo coinciden EXACTAMENTE con los esperados
+□ Los videos se reproducen sin errores
+□ El tamaño total de la carpeta es razonable (~1-2 GB máximo)
+□ Ningún archivo contiene información personal o confidencial
+□ Los audios son casos FICTICIOS o ANONIMIZADOS
+
+
+⚠️ IMPORTANTE: PRIVACIDAD Y SEGURIDAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- NO incluir datos personales en capturas de pantalla
+- NO usar datos reales de pacientes (usar casos ficticios)
+- NO incluir información confidencial
+- ANONIMIZAR cualquier dato identificable
+- Los casos "reales" en la documentación son EJEMPLOS AGREGADOS
+
+
+🔧 ALTERNATIVA: USAR PLACEHOLDERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si no puedes generar todos los archivos ahora, puedes:
+
+1. Crear imágenes placeholder (800x600 PNG con texto indicativo)
+2. Usar videos placeholder cortos
+3. Generar archivos WAV de prueba de 1 minuto
+4. Reemplazar con archivos reales más tarde
+
+Los enlaces en la landing page funcionarán aunque los archivos no existan
+(solo dará error 404 al intentar descargar/ver).
+
+
+📞 AYUDA Y SOPORTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ver documentación completa en:
+- README.md - Lista completa de archivos
+- GUIA_DE_USO.md - Guía detallada de uso
+
+================================================================================

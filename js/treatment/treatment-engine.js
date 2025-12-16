@@ -17,6 +17,7 @@ class TreatmentEngine {
     this.filters = [];
     this.noiseNode = null;
     this.masterGain = null;
+    this.stereoPanner = null; // Stereo balance control (L-R)
 
     // Session tracking
     this.sessionStartTime = null;
@@ -26,6 +27,9 @@ class TreatmentEngine {
 
     // Volume
     this.volume = 0.3;
+
+    // Stereo balance (-1 = left, 0 = center, 1 = right)
+    this.stereoBalance = 0;
 
     // Hybrid therapy controls
     this.hybridBalance = 0.5; // 0 = all therapy, 1 = all ambient (0.5 = 50/50)
@@ -162,11 +166,21 @@ class TreatmentEngine {
     gainNode.gain.value = this.volume;
     Logger.debug('treatment', `Nodo de ganancia creado: ${(this.volume * 100).toFixed(0)}%`);
 
+    // Initialize stereo panner
+    const stereoPanner = this.initStereoPanner();
+
     // Connect nodes
     this.noiseNode.connect(notchFilter);
     notchFilter.connect(gainNode);
-    gainNode.connect(AudioContextManager.getMasterGain());
-    Logger.debug('treatment', 'Nodos de audio conectados: Noise → Notch → Gain → Master');
+
+    // Connect to stereo panner if available, otherwise directly to master
+    if (stereoPanner) {
+      gainNode.connect(stereoPanner);
+      Logger.debug('treatment', 'Nodos conectados: Noise → Notch → Gain → StereoPanner → Master');
+    } else {
+      gainNode.connect(AudioContextManager.getMasterGain());
+      Logger.debug('treatment', 'Nodos conectados: Noise → Notch → Gain → Master (sin stereo panner)');
+    }
 
     // Store references
     this.filters.push(notchFilter, lowpass, highpass);
@@ -201,6 +215,10 @@ class TreatmentEngine {
       Relación: `${(frequencies[i] / f_tinnitus).toFixed(2)}x`
     })));
 
+    // Initialize stereo panner
+    const stereoPanner = this.initStereoPanner();
+    const destination = stereoPanner || AudioContextManager.getMasterGain();
+
     // Create oscillators and gain nodes for each frequency
     frequencies.forEach((freq, index) => {
       const oscillator = context.createOscillator();
@@ -211,7 +229,7 @@ class TreatmentEngine {
       gainNode.gain.value = 0; // Start silent
 
       oscillator.connect(gainNode);
-      gainNode.connect(AudioContextManager.getMasterGain());
+      gainNode.connect(destination); // Connect to stereo panner if available, otherwise master
 
       this.oscillators.push(oscillator);
       this.gainNodes.push(gainNode);
@@ -220,7 +238,11 @@ class TreatmentEngine {
       Logger.debug('treatment', `Oscilador ${index + 1} creado: ${freq.toFixed(1)} Hz`);
     });
 
-    Logger.success('treatment', `✅ 4 osciladores CR creados y conectados`);
+    if (stereoPanner) {
+      Logger.success('treatment', `✅ 4 osciladores CR creados y conectados a StereoPanner`);
+    } else {
+      Logger.success('treatment', `✅ 4 osciladores CR creados y conectados a Master (sin stereo panner)`);
+    }
 
     // Start CR pattern (random sequence)
     Logger.info('treatment', 'Iniciando patrón de estimulación CR...');
@@ -374,6 +396,9 @@ class TreatmentEngine {
     const gainNode = context.createGain();
     gainNode.gain.value = this.volume;
 
+    // Initialize stereo panner
+    const stereoPanner = this.initStereoPanner();
+
     // Connect nodes
     if (noiseType === 'narrowband') {
       // Add bandpass filter for narrowband
@@ -389,7 +414,12 @@ class TreatmentEngine {
       this.noiseNode.connect(gainNode);
     }
 
-    gainNode.connect(AudioContextManager.getMasterGain());
+    // Connect to stereo panner if available, otherwise directly to master
+    if (stereoPanner) {
+      gainNode.connect(stereoPanner);
+    } else {
+      gainNode.connect(AudioContextManager.getMasterGain());
+    }
 
     // Store references
     this.gainNodes.push(gainNode);
@@ -720,13 +750,71 @@ class TreatmentEngine {
     this.gainNodes.forEach(node => node.disconnect());
     this.filters.forEach(filter => filter.disconnect());
 
+    // Disconnect hybrid therapy gain nodes (but don't reset them for crossfade)
+    if (this.therapyGain && !this.keepHybridGains) {
+      try {
+        this.therapyGain.disconnect();
+      } catch (e) {
+        Logger.warn('treatment', `Error desconectando therapyGain: ${e.message}`);
+      }
+    }
+    if (this.ambientGain && !this.keepHybridGains) {
+      try {
+        this.ambientGain.disconnect();
+      } catch (e) {
+        Logger.warn('treatment', `Error desconectando ambientGain: ${e.message}`);
+      }
+    }
+
+    // Disconnect and clear stereo panner
+    if (this.stereoPanner) {
+      try {
+        this.stereoPanner.disconnect();
+        this.stereoPanner = null;
+        Logger.debug('treatment', 'StereoPannerNode desconectado y limpiado');
+      } catch (e) {
+        Logger.warn('treatment', `Error desconectando stereoPanner: ${e.message}`);
+      }
+    }
+
     // Clear arrays
     this.oscillators = [];
     this.gainNodes = [];
     this.filters = [];
     this.noiseNode = null;
 
+    // Clear hybrid gains if not keeping them
+    if (!this.keepHybridGains) {
+      this.therapyGain = null;
+      this.ambientGain = null;
+    }
+
     Logger.debug('treatment', '✅ Audio detenido, sesión continúa');
+  }
+
+  /**
+   * Fade out hybrid therapy gain nodes
+   */
+  async fadeOutHybridTherapy() {
+    Logger.info('treatment', '🎚️ Aplicando fade out a terapia híbrida...');
+
+    const context = AudioContextManager.getContext();
+    const currentTime = context.currentTime;
+    const fadeOutDuration = 1.5; // 1.5 seconds fade out
+
+    // Fade out both gain nodes
+    this.therapyGain.gain.cancelScheduledValues(currentTime);
+    this.therapyGain.gain.setValueAtTime(this.therapyGain.gain.value, currentTime);
+    this.therapyGain.gain.linearRampToValueAtTime(0, currentTime + fadeOutDuration);
+
+    this.ambientGain.gain.cancelScheduledValues(currentTime);
+    this.ambientGain.gain.setValueAtTime(this.ambientGain.gain.value, currentTime);
+    this.ambientGain.gain.linearRampToValueAtTime(0, currentTime + fadeOutDuration);
+
+    // Wait for fade out to complete
+    await new Promise(resolve => setTimeout(resolve, fadeOutDuration * 1000));
+
+    Logger.debug('treatment', '✅ Fade out completado');
   }
 
   /**
@@ -782,9 +870,95 @@ class TreatmentEngine {
       Logger.debug('treatment', `${this.gainNodes.length} nodos de ganancia actualizados`);
     }
 
+    // Update hybrid therapy gain nodes with proper balance
+    if (this.therapyGain && this.ambientGain) {
+      const context = AudioContextManager.getContext();
+      const currentTime = context.currentTime;
+      const transitionDuration = 0.15;
+
+      const therapyVolume = this.volume * (1 - this.hybridBalance * 0.4);
+      const ambientVolume = this.volume * (this.hybridBalance * 0.4 + 0.4);
+
+      this.therapyGain.gain.cancelScheduledValues(currentTime);
+      this.therapyGain.gain.setValueAtTime(this.therapyGain.gain.value, currentTime);
+      this.therapyGain.gain.linearRampToValueAtTime(therapyVolume, currentTime + transitionDuration);
+
+      this.ambientGain.gain.cancelScheduledValues(currentTime);
+      this.ambientGain.gain.setValueAtTime(this.ambientGain.gain.value, currentTime);
+      this.ambientGain.gain.linearRampToValueAtTime(ambientVolume, currentTime + transitionDuration);
+
+      Logger.debug('treatment', `Gain híbridos actualizados: therapy=${Math.round(therapyVolume * 100)}%, ambient=${Math.round(ambientVolume * 100)}%`);
+    }
+
     if (this.onVolumeChange) {
       this.onVolumeChange(this.volume);
     }
+  }
+
+  /**
+   * Set stereo balance (L-R)
+   * @param {number} balance - Value from -1 (full left) to 1 (full right), 0 = center
+   */
+  setStereoBalance(balance) {
+    const oldBalance = this.stereoBalance;
+    this.stereoBalance = Utils.clamp(balance, -1, 1);
+
+    const direction = this.stereoBalance < -0.1 ? 'Izquierda' : this.stereoBalance > 0.1 ? 'Derecha' : 'Centro';
+    Logger.info('treatment', `🎧 Balance estéreo: ${(oldBalance * 100).toFixed(0)}% → ${(this.stereoBalance * 100).toFixed(0)}% (${direction})`);
+
+    // Update stereo panner if it exists
+    if (this.stereoPanner) {
+      const context = AudioContextManager.getContext();
+      const currentTime = context.currentTime;
+      const transitionDuration = 0.15; // 150ms smooth transition
+
+      const currentPan = this.stereoPanner.pan.value;
+      Logger.debug('treatment', `   Pan actual: ${currentPan.toFixed(2)} → Pan objetivo: ${this.stereoBalance.toFixed(2)}`);
+
+      // Smooth transition to new balance
+      this.stereoPanner.pan.cancelScheduledValues(currentTime);
+      this.stereoPanner.pan.setValueAtTime(currentPan, currentTime);
+      this.stereoPanner.pan.linearRampToValueAtTime(this.stereoBalance, currentTime + transitionDuration);
+
+      // Verify after a short delay
+      setTimeout(() => {
+        const finalPan = this.stereoPanner ? this.stereoPanner.pan.value : 'N/A';
+        Logger.debug('treatment', `   ✓ Pan aplicado: ${typeof finalPan === 'number' ? finalPan.toFixed(2) : finalPan}`);
+      }, 200);
+    } else {
+      Logger.warn('treatment', '⚠️ StereoPannerNode no existe - balance no se puede aplicar aún');
+      Logger.info('treatment', '   Se aplicará cuando inicie la terapia');
+    }
+  }
+
+  /**
+   * Initialize stereo panner node and connect to master
+   * @returns {StereoPannerNode} The created stereo panner
+   */
+  initStereoPanner() {
+    const context = AudioContextManager.getContext();
+    const masterGain = AudioContextManager.getMasterGain();
+
+    // Create stereo panner if it doesn't exist
+    if (!this.stereoPanner) {
+      // Check if StereoPannerNode is supported
+      if (typeof context.createStereoPanner !== 'function') {
+        Logger.error('treatment', '❌ StereoPannerNode NO está soportado en este navegador');
+        Logger.warn('treatment', 'Balance L-R no funcionará. Usar Chrome/Firefox/Edge actualizado.');
+        return null;
+      }
+
+      this.stereoPanner = context.createStereoPanner();
+      this.stereoPanner.pan.value = this.stereoBalance;
+      this.stereoPanner.connect(masterGain);
+
+      Logger.success('treatment', `✅ StereoPannerNode creado exitosamente`);
+      Logger.debug('treatment', `   Balance inicial: ${this.stereoBalance} (${(this.stereoBalance * 100).toFixed(0)}%)`);
+      Logger.debug('treatment', `   Pan value: ${this.stereoPanner.pan.value}`);
+      Logger.debug('treatment', `   Conectado a: MasterGain`);
+    }
+
+    return this.stereoPanner;
   }
 
   /**
@@ -799,6 +973,7 @@ class TreatmentEngine {
     // If a therapy is playing, restart it with the new frequency
     if (this.isPlaying && this.currentTherapy) {
       Logger.debug('treatment', `Reiniciando terapia ${this.currentTherapy} con nueva frecuencia`);
+      Logger.debug('treatment', `SubTipo actual: ${this.currentSubType || 'ninguno'}`);
 
       // Store current state
       const currentSubType = this.currentSubType;
@@ -821,6 +996,18 @@ class TreatmentEngine {
         case 'ambient':
           await this.startAmbientTherapy(currentSubType || 'rain');
           break;
+        case 'hybrid-notched-ambient':
+          Logger.debug('treatment', `Reiniciando terapia híbrida Notched + ${currentSubType}`);
+          await this.startHybridNotchedAmbient(currentSubType || 'rain');
+          break;
+        case 'hybrid-cr-ambient':
+          Logger.debug('treatment', `Reiniciando terapia híbrida CR + ${currentSubType}`);
+          await this.startHybridCRAmbient(currentSubType || 'rain');
+          break;
+        default:
+          Logger.error('treatment', `❌ Tipo de terapia desconocido: ${this.currentTherapy}`);
+          Logger.warn('treatment', 'No se pudo reiniciar la terapia con nueva frecuencia');
+          return;
       }
 
       Logger.success('treatment', `✅ Frecuencia actualizada y terapia reiniciada`);
@@ -971,19 +1158,77 @@ class TreatmentEngine {
       }
       await this.startAmbientTherapy(subType);
       // No necesitamos restaurar isPlaying porque nunca lo cambiamos
-    } else if (this.currentTherapy === 'hybrid-notched-ambient') {
+    } else if (this.currentTherapy === 'hybrid-notched-ambient' ||
+               this.currentTherapy === 'hybrid-cr-ambient') {
       if (wasPlaying) {
+        // Use smooth crossfade for hybrid therapies
+        await this.changeHybridAmbientSound(subType);
+      } else {
+        // Not playing, just restart normally
         this.stopAudioOnly();
+        if (this.currentTherapy === 'hybrid-notched-ambient') {
+          await this.startHybridNotchedAmbient(subType);
+        } else {
+          await this.startHybridCRAmbient(subType);
+        }
       }
-      await this.startHybridNotchedAmbient(subType);
-    } else if (this.currentTherapy === 'hybrid-cr-ambient') {
-      if (wasPlaying) {
-        this.stopAudioOnly();
-      }
-      await this.startHybridCRAmbient(subType);
     }
 
     Logger.success('treatment', `✅ Subtipo cambiado a: ${subType}`);
+  }
+
+  /**
+   * Change ambient sound in hybrid therapy with smooth crossfade
+   */
+  async changeHybridAmbientSound(newAmbientType) {
+    Logger.info('treatment', `🎵 Cambiando sonido ambiental a: ${newAmbientType} (crossfade suave)`);
+
+    if (!this.ambientGain || !this.isPlaying) {
+      Logger.warn('treatment', 'No hay terapia híbrida activa');
+      return;
+    }
+
+    const context = AudioContextManager.getContext();
+    const currentTime = context.currentTime;
+    const crossfadeDuration = 1.0; // 1 second crossfade
+
+    // Save old ambient gain and its current volume
+    const oldAmbientGain = this.ambientGain;
+    const oldVolume = oldAmbientGain.gain.value;
+
+    // Create new ambient gain node
+    this.ambientGain = context.createGain();
+    this.ambientGain.gain.value = 0; // Start at 0 for fade in
+
+    // Connect new ambient gain to stereo panner (which connects to master)
+    this.ambientGain.connect(this.stereoPanner);
+
+    // Start new ambient sound
+    await this.addAmbientSound(newAmbientType, this.ambientGain);
+
+    // Crossfade: old ambient fades out, new ambient fades in
+    oldAmbientGain.gain.cancelScheduledValues(currentTime);
+    oldAmbientGain.gain.setValueAtTime(oldVolume, currentTime);
+    oldAmbientGain.gain.linearRampToValueAtTime(0, currentTime + crossfadeDuration);
+
+    this.ambientGain.gain.cancelScheduledValues(currentTime);
+    this.ambientGain.gain.setValueAtTime(0, currentTime);
+    this.ambientGain.gain.linearRampToValueAtTime(oldVolume, currentTime + crossfadeDuration);
+
+    // Update current subtype
+    this.currentSubType = newAmbientType;
+
+    // Clean up old ambient nodes after crossfade
+    setTimeout(() => {
+      try {
+        oldAmbientGain.disconnect();
+        Logger.debug('treatment', '✅ Sonido ambiental anterior limpiado');
+      } catch (e) {
+        Logger.warn('treatment', `Error limpiando sonido anterior: ${e.message}`);
+      }
+    }, (crossfadeDuration + 0.1) * 1000);
+
+    Logger.success('treatment', `✅ Crossfade completado a ${newAmbientType}`);
   }
 
   /**
@@ -1020,10 +1265,11 @@ class TreatmentEngine {
     this.therapyGain.gain.linearRampToValueAtTime(therapyVolume, currentTime + 2);
     this.ambientGain.gain.linearRampToValueAtTime(ambientVolume, currentTime + 2);
 
-    // Connect to master
-    const masterGain = AudioContextManager.getMasterGain();
-    this.therapyGain.connect(masterGain);
-    this.ambientGain.connect(masterGain);
+    // Initialize stereo panner and connect to it (or master if not available)
+    const stereoPanner = this.initStereoPanner();
+    const destination = stereoPanner || AudioContextManager.getMasterGain();
+    this.therapyGain.connect(destination);
+    this.ambientGain.connect(destination);
 
     // Start notched therapy (white noise with notch)
     const bufferSize = 2 * context.sampleRate;
@@ -1088,10 +1334,11 @@ class TreatmentEngine {
     this.therapyGain.gain.linearRampToValueAtTime(therapyVolume, currentTime + 2);
     this.ambientGain.gain.linearRampToValueAtTime(ambientVolume, currentTime + 2);
 
-    // Connect to master
-    const masterGain = AudioContextManager.getMasterGain();
-    this.therapyGain.connect(masterGain);
-    this.ambientGain.connect(masterGain);
+    // Initialize stereo panner and connect to it (or master if not available)
+    const stereoPanner = this.initStereoPanner();
+    const destination = stereoPanner || AudioContextManager.getMasterGain();
+    this.therapyGain.connect(destination);
+    this.ambientGain.connect(destination);
 
     // Start CR therapy (4 tones)
     const f = this.tinnitusFrequency;
@@ -1298,8 +1545,18 @@ class TreatmentEngine {
       const therapyVolume = this.volume * (1 - this.hybridBalance * 0.4);
       const ambientVolume = this.volume * (this.hybridBalance * 0.4 + 0.4);
 
-      this.therapyGain.gain.value = therapyVolume;
-      this.ambientGain.gain.value = ambientVolume;
+      // Smooth transition (0.2 seconds) instead of instant change
+      const context = AudioContextManager.getContext();
+      const currentTime = context.currentTime;
+      const transitionDuration = 0.2;
+
+      this.therapyGain.gain.cancelScheduledValues(currentTime);
+      this.therapyGain.gain.setValueAtTime(this.therapyGain.gain.value, currentTime);
+      this.therapyGain.gain.linearRampToValueAtTime(therapyVolume, currentTime + transitionDuration);
+
+      this.ambientGain.gain.cancelScheduledValues(currentTime);
+      this.ambientGain.gain.setValueAtTime(this.ambientGain.gain.value, currentTime);
+      this.ambientGain.gain.linearRampToValueAtTime(ambientVolume, currentTime + transitionDuration);
 
       Logger.info('treatment', `🎚️ Balance híbrido ajustado: ${Math.round(this.hybridBalance * 100)}% (Terapia: ${Math.round(therapyVolume * 100)}%, Ambient: ${Math.round(ambientVolume * 100)}%)`);
     }

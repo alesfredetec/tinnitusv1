@@ -432,7 +432,17 @@ class TinnitusMatchingUI {
    */
   renderValidation() {
     const progress = this.engine.getProgress();
-    this.validationTests = this.engine.generateValidationTests();
+
+    // Use existing tests if available (preserves answered state)
+    if (!this.validationTests || this.validationTests.length === 0) {
+      this.validationTests = this.engine.generateValidationTests();
+    } else {
+      // Use the engine's tests which have the answered state
+      this.validationTests = this.engine.validationTests;
+    }
+
+    const completedCount = this.validationTests.filter(t => t.answered).length;
+    const totalTests = this.validationTests.length;
 
     this.container.innerHTML = `
       <div class="matching-container">
@@ -441,36 +451,60 @@ class TinnitusMatchingUI {
         <div class="card">
           <h2 class="mb-4">Etapa 5: Validación</h2>
 
-          <div class="alert alert-info mb-6">
-            Prueba final. Escucha cada par de sonidos y selecciona cuál coincide mejor con tu tinnitus.
+          <div class="alert alert-info mb-4">
+            <strong>Prueba final de confirmación</strong><br>
+            Escucha cada par de sonidos (A y B) y selecciona cuál coincide mejor con tu tinnitus.<br>
+            <strong>Debes responder todos los tests para continuar.</strong>
+          </div>
+
+          <!-- Progress Indicator -->
+          <div class="mb-6 p-4 bg-light rounded">
+            <div class="flex justify-between items-center">
+              <div class="text-sm text-secondary">Tests completados:</div>
+              <div class="text-2xl font-bold ${completedCount === totalTests ? 'text-success' : 'text-primary'}">
+                ${completedCount} / ${totalTests}
+              </div>
+            </div>
+            ${completedCount > 0 ? `
+              <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div class="bg-primary h-2 rounded-full transition-all" style="width: ${(completedCount / totalTests) * 100}%"></div>
+              </div>
+            ` : ''}
           </div>
 
           <!-- Validation Tests -->
           <div id="validation-tests">
             ${this.validationTests.map((test, index) => `
-              <div class="validation-test mb-6" id="test-${test.id}">
-                <h3 class="mb-3">Test ${index + 1} de ${this.validationTests.length}</h3>
+              <div class="validation-test mb-6 p-4 border-2 rounded ${test.answered ? 'border-success bg-success-light' : 'border-gray-300'}" id="test-${test.id}">
+                <h3 class="mb-3 flex items-center gap-2">
+                  <span class="text-lg font-bold">${test.answered ? '✅' : '⭕'}</span>
+                  <span>Test ${index + 1} de ${this.validationTests.length}</span>
+                </h3>
 
                 <div class="test-sounds flex gap-4 mb-4">
                   <div class="sound-option flex-1">
                     <button class="btn btn-secondary w-full mb-2"
-                            onclick="matchingUI.playValidationSound('${test.id}', 'A', ${test.soundA})">
-                      ▶ Reproducir Sonido A
+                            onclick="matchingUI.playValidationSound('${test.id}', 'A', ${test.soundA})"
+                            ${test.answered ? 'disabled' : ''}>
+                      🔊 Reproducir Sonido A
                     </button>
-                    <button class="btn btn-outline w-full"
-                            onclick="matchingUI.selectValidationAnswer('${test.id}', 'A')">
-                      Seleccionar A
+                    <button class="btn ${test.answered ? 'btn-outline' : 'btn-primary'} w-full"
+                            onclick="matchingUI.selectValidationAnswer('${test.id}', 'A')"
+                            ${test.answered ? 'disabled' : ''}>
+                      ${test.answered ? (test.userAnswer === 'A' ? '✓ Seleccionado' : 'A') : 'Seleccionar A'}
                     </button>
                   </div>
 
                   <div class="sound-option flex-1">
                     <button class="btn btn-secondary w-full mb-2"
-                            onclick="matchingUI.playValidationSound('${test.id}', 'B', ${test.soundB})">
-                      ▶ Reproducir Sonido B
+                            onclick="matchingUI.playValidationSound('${test.id}', 'B', ${test.soundB})"
+                            ${test.answered ? 'disabled' : ''}>
+                      🔊 Reproducir Sonido B
                     </button>
-                    <button class="btn btn-outline w-full"
-                            onclick="matchingUI.selectValidationAnswer('${test.id}', 'B')">
-                      Seleccionar B
+                    <button class="btn ${test.answered ? 'btn-outline' : 'btn-primary'} w-full"
+                            onclick="matchingUI.selectValidationAnswer('${test.id}', 'B')"
+                            ${test.answered ? 'disabled' : ''}>
+                      ${test.answered ? (test.userAnswer === 'B' ? '✓ Seleccionado' : 'B') : 'Seleccionar B'}
                     </button>
                   </div>
                 </div>
@@ -480,12 +514,27 @@ class TinnitusMatchingUI {
             `).join('')}
           </div>
 
-          <button class="btn btn-primary w-full"
-                  id="complete-btn"
-                  onclick="matchingUI.completeValidation()"
-                  style="display: none;">
-            Completar Búsqueda ✓
-          </button>
+          <!-- Complete button with clear messaging -->
+          <div id="completion-section">
+            ${completedCount === totalTests ? `
+              <div class="alert alert-success mb-4">
+                ✅ <strong>¡Todos los tests completados!</strong><br>
+                Has respondido ${totalTests} de ${totalTests} tests. Ahora puedes continuar a la siguiente etapa.
+              </div>
+            ` : `
+              <div class="alert alert-warning mb-4">
+                ⏳ <strong>Completa todos los tests para continuar</strong><br>
+                Faltan ${totalTests - completedCount} tests por responder.
+              </div>
+            `}
+
+            <button class="btn btn-primary btn-lg w-full"
+                    id="complete-btn"
+                    onclick="matchingUI.completeValidation()"
+                    ${completedCount === totalTests ? '' : 'disabled style="opacity: 0.5; cursor: not-allowed;"'}>
+              ${completedCount === totalTests ? '✓ Continuar a Etapa 6 (MML)' : '⏳ Completa todos los tests primero'}
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -798,16 +847,26 @@ class TinnitusMatchingUI {
   selectValidationAnswer(testId, answer) {
     const correct = this.engine.processValidationAnswer(testId, answer);
 
+    // Show immediate feedback
     const resultDiv = document.getElementById(`result-${testId}`);
-    resultDiv.style.display = 'block';
-    resultDiv.className = `test-result alert ${correct ? 'alert-success' : 'alert-danger'}`;
-    resultDiv.textContent = correct ? '✓ Correcto' : '✗ Incorrecto';
-
-    // Check if all tests completed
-    const allCompleted = this.validationTests.every(t => t.answered);
-    if (allCompleted) {
-      document.getElementById('complete-btn').style.display = 'block';
+    if (resultDiv) {
+      resultDiv.style.display = 'block';
+      resultDiv.className = `test-result alert ${correct ? 'alert-success' : 'alert-danger'}`;
+      resultDiv.textContent = correct ? '✓ Correcto - Tu respuesta coincide' : '✗ Incorrecto - El otro sonido era más cercano';
     }
+
+    // Re-render to update progress and show completion button if needed
+    setTimeout(() => {
+      this.renderValidation();
+      // Scroll to completion section if all done
+      const allCompleted = this.validationTests.every(t => t.answered);
+      if (allCompleted) {
+        const completionSection = document.getElementById('completion-section');
+        if (completionSection) {
+          completionSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }, 1000); // Give user time to see the feedback
   }
 
   /**
