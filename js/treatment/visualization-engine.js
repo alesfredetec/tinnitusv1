@@ -129,6 +129,18 @@ class VisualizationEngine {
    * Start visualization
    */
   start(type = 'fractal') {
+    // Re-connect canvas if it was disconnected (e.g., after therapy change)
+    if (this.canvas && !document.body.contains(this.canvas)) {
+      Logger.warn('visualization', 'Canvas desconectado, re-conectando...');
+      const newCanvas = document.getElementById('visualization-canvas');
+      if (newCanvas && document.body.contains(newCanvas)) {
+        this.canvas = newCanvas;
+        this.ctx = newCanvas.getContext('2d');
+        this.resize();
+        Logger.success('visualization', '✅ Canvas re-conectado automáticamente');
+      }
+    }
+
     if (!this.canvas || !this.ctx) {
       Logger.error('visualization', 'Cannot start: canvas or context not initialized');
       return;
@@ -204,24 +216,40 @@ class VisualizationEngine {
 
     // Verify canvas is connected to DOM
     if (!document.body.contains(this.canvas)) {
-      Logger.error('visualization', 'No se puede activar fullscreen: canvas no está conectado al DOM');
-      Logger.debug('visualization', 'Verificando estructura DOM...');
+      Logger.warn('visualization', 'Canvas desconectado del DOM (cambio de terapia detectado)');
+      Logger.debug('visualization', 'Intentando re-conectar al canvas nuevo...');
 
-      const container = document.getElementById('visualization-container');
-      if (container) {
-        Logger.debug('visualization', `Container existe: ${container.style.display}`);
-        const wrapper = container.querySelector('.canvas-wrapper');
-        if (wrapper) {
-          Logger.debug('visualization', `Wrapper existe, buscando canvas...`);
-          const canvasInDom = wrapper.querySelector('#visualization-canvas');
-          Logger.debug('visualization', `Canvas en DOM: ${canvasInDom ? 'SI' : 'NO'}`);
-        } else {
-          Logger.error('visualization', 'Canvas wrapper no encontrado');
-        }
+      // Try to re-acquire canvas reference
+      const newCanvas = document.getElementById('visualization-canvas');
+      if (newCanvas && document.body.contains(newCanvas)) {
+        Logger.success('visualization', '✅ Canvas nuevo encontrado y conectado');
+        this.canvas = newCanvas;
+        this.ctx = newCanvas.getContext('2d');
+
+        // Resize to match new canvas
+        this.resize();
+
+        Logger.info('visualization', `Canvas re-conectado: ${this.canvas.width}x${this.canvas.height}`);
       } else {
-        Logger.error('visualization', 'Visualization container no encontrado');
+        Logger.error('visualization', 'No se pudo encontrar canvas nuevo en el DOM');
+        Logger.debug('visualization', 'Verificando estructura DOM...');
+
+        const container = document.getElementById('visualization-container');
+        if (container) {
+          Logger.debug('visualization', `Container existe: ${container.style.display}`);
+          const wrapper = container.querySelector('.canvas-wrapper');
+          if (wrapper) {
+            Logger.debug('visualization', `Wrapper existe, buscando canvas...`);
+            const canvasInDom = wrapper.querySelector('#visualization-canvas');
+            Logger.debug('visualization', `Canvas en DOM: ${canvasInDom ? 'SI' : 'NO'}`);
+          } else {
+            Logger.error('visualization', 'Canvas wrapper no encontrado');
+          }
+        } else {
+          Logger.error('visualization', 'Visualization container no encontrado');
+        }
+        return;
       }
-      return;
     }
 
     const isCurrentlyFullscreen = !!(document.fullscreenElement ||
