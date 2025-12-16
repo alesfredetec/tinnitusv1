@@ -1,0 +1,16 @@
+# Archivos de audio grandes generados por la aplicación
+sonidosdemo/*.wav
+
+# Logs
+*.log
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
