@@ -36,6 +36,14 @@ class TreatmentEngine {
     this.therapyGain = null; // Gain node for therapy stream
     this.ambientGain = null; // Gain node for ambient stream
 
+    // YouTube integration
+    this.youtubeEnabled = false;
+    this.currentYouTubeVideoId = null;
+    this.currentYouTubeTitle = null;
+    this.youtubeBalance = 0.5; // 0 = all therapy, 1 = all YouTube (0.5 = 50/50)
+    this.youtubeGain = null; // Gain node for YouTube audio
+    this.youtubeSource = null; // MediaElementSource for YouTube
+
     // Callbacks
     this.onSessionStart = null;
     this.onSessionEnd = null;
@@ -789,6 +797,9 @@ class TreatmentEngine {
       this.ambientGain = null;
     }
 
+    // NOTE: YouTube is NOT stopped here - it should continue playing when changing sounds
+    // YouTube cleanup only happens in stopTherapy() or disableYouTube()
+
     Logger.debug('treatment', '✅ Audio detenido, sesión continúa');
   }
 
@@ -838,6 +849,24 @@ class TreatmentEngine {
 
     // Stop audio
     this.stopAudioOnly();
+
+    // Cleanup YouTube when ending session
+    if (this.youtubeEnabled) {
+      try {
+        YouTubeManager.stop();
+        if (this.youtubeSource) {
+          this.youtubeSource.disconnect();
+          this.youtubeSource = null;
+        }
+        if (this.youtubeGain) {
+          this.youtubeGain.disconnect();
+          this.youtubeGain = null;
+        }
+        Logger.debug('treatment', 'YouTube audio desconectado al finalizar sesión');
+      } catch (e) {
+        Logger.warn('treatment', `Error desconectando YouTube: ${e.message}`);
+      }
+    }
 
     // Save session
     if (this.sessionStartTime) {
@@ -956,6 +985,19 @@ class TreatmentEngine {
       Logger.debug('treatment', `   Balance inicial: ${this.stereoBalance} (${(this.stereoBalance * 100).toFixed(0)}%)`);
       Logger.debug('treatment', `   Pan value: ${this.stereoPanner.pan.value}`);
       Logger.debug('treatment', `   Conectado a: MasterGain`);
+
+      // Reconnect YouTube gain to new stereoPanner if YouTube is enabled
+      if (this.youtubeEnabled && this.youtubeGain) {
+        try {
+          // Disconnect from old routing
+          this.youtubeGain.disconnect();
+          // Connect to new stereoPanner
+          this.youtubeGain.connect(this.stereoPanner);
+          Logger.debug('treatment', '🔄 YouTube gain reconnected to new StereoPanner');
+        } catch (e) {
+          Logger.warn('treatment', `Error reconnecting YouTube gain: ${e.message}`);
+        }
+      }
     }
 
     return this.stereoPanner;
@@ -1061,7 +1103,13 @@ class TreatmentEngine {
       targetDuration: this.targetDuration,
       frequency: this.tinnitusFrequency,
       completed: duration >= this.targetDuration - 10, // Within 10 seconds
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+
+      // NUEVO: YouTube metadata
+      youtubeEnabled: this.youtubeEnabled,
+      youtubeVideoId: this.currentYouTubeVideoId || null,
+      youtubeTitle: this.currentYouTubeTitle || null,
+      youtubeBalance: this.youtubeBalance
     };
 
     Logger.info('treatment', '💾 Guardando sesión de tratamiento');
@@ -2133,6 +2181,199 @@ class TreatmentEngine {
       Logger.error('treatment', `Error generando audio: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Set YouTube balance (0 = all therapy, 1 = all YouTube)
+   */
+  setYouTubeBalance(balance) {
+    this.youtubeBalance = Utils.clamp(balance, 0, 1);
+
+    if (!this.youtubeEnabled || !this.isPlaying) {
+      return;
+    }
+
+    const context = AudioContextManager.getContext();
+    const currentTime = context.currentTime;
+
+    // Crossfade mejorado: volúmenes más altos para mejor audibilidad
+    // Con volumen base 30% y balance 50/50 → ambos ~30%
+    // balance = 0 → therapy: 100%, youtube: 40%
+    // balance = 0.5 → therapy: 70%, youtube: 70%
+    // balance = 1 → therapy: 40%, youtube: 100%
+    const therapyVol = Math.min(1, this.volume * (1 - this.youtubeBalance * 0.6) * 1.5);
+    const youtubeVol = Math.min(1, this.volume * (this.youtubeBalance * 0.6 + 0.4) * 1.5);
+
+    // Update all therapy gain nodes
+    this.gainNodes.forEach(node => {
+      node.gain.cancelScheduledValues(currentTime);
+      node.gain.setValueAtTime(node.gain.value, currentTime);
+      node.gain.linearRampToValueAtTime(therapyVol, currentTime + 0.3);
+    });
+
+    // Update hybrid therapy gain if exists
+    if (this.therapyGain) {
+      this.therapyGain.gain.cancelScheduledValues(currentTime);
+      this.therapyGain.gain.setValueAtTime(this.therapyGain.gain.value, currentTime);
+      this.therapyGain.gain.linearRampToValueAtTime(therapyVol, currentTime + 0.3);
+    }
+
+    // Update YouTube gain
+    if (this.youtubeGain) {
+      this.youtubeGain.gain.cancelScheduledValues(currentTime);
+      this.youtubeGain.gain.setValueAtTime(this.youtubeGain.gain.value, currentTime);
+      this.youtubeGain.gain.linearRampToValueAtTime(youtubeVol, currentTime + 0.3);
+    }
+
+    Logger.info('treatment', `🎚️ Balance YouTube ajustado: ${Math.round(this.youtubeBalance * 100)}% (Terapia: ${Math.round(therapyVol * 100)}%, YouTube: ${Math.round(youtubeVol * 100)}%)`);
+  }
+
+  /**
+   * Enable YouTube integration
+   */
+  async enableYouTube(videoId, videoTitle) {
+    try {
+      this.currentYouTubeVideoId = videoId;
+      this.currentYouTubeTitle = videoTitle;
+      this.youtubeEnabled = true;
+
+      Logger.info('treatment', `🎵 YouTube enabled: ${videoTitle} (${videoId})`);
+
+      // Si ya está reproduciendo, conectar YouTube inmediatamente
+      if (this.isPlaying) {
+        await this.connectYouTubeAudio();
+      }
+
+    } catch (error) {
+      Logger.error('treatment', 'Error enabling YouTube:', error);
+      this.youtubeEnabled = false;
+      throw error;
+    }
+  }
+
+  /**
+   * Connect YouTube audio to Web Audio API
+   */
+  async connectYouTubeAudio() {
+    const context = AudioContextManager.getContext();
+
+    try {
+      // Load YouTube IFrame API if not loaded
+      await YouTubeManager.loadAPI();
+
+      // Initialize YouTube Player
+      await YouTubeManager.initPlayer(this.currentYouTubeVideoId);
+      await YouTubeManager.play();
+
+      // Create gain node for YouTube
+      this.youtubeGain = context.createGain();
+      const youtubeVol = Math.min(1, this.volume * (this.youtubeBalance * 0.6 + 0.4) * 1.5);
+      this.youtubeGain.gain.value = 0; // Start at 0 for fade in
+
+      // Try to connect via Web Audio API (may fail due to CORS)
+      try {
+        const videoElement = YouTubeManager.getAudioElement();
+
+        if (videoElement && videoElement.tagName === 'VIDEO') {
+          // Create MediaElementSource
+          this.youtubeSource = context.createMediaElementSource(videoElement);
+          this.youtubeSource.connect(this.youtubeGain);
+
+          // Connect to stereoPanner
+          if (this.stereoPanner) {
+            this.youtubeGain.connect(this.stereoPanner);
+          } else {
+            this.youtubeGain.connect(AudioContextManager.getMasterGain());
+          }
+
+          // Fade in suave (2 segundos)
+          this.youtubeGain.gain.linearRampToValueAtTime(
+            youtubeVol,
+            context.currentTime + 2
+          );
+
+          Logger.info('treatment', '✅ YouTube audio connected via Web Audio API');
+        } else {
+          throw new Error('Video element not accessible');
+        }
+
+      } catch (corsError) {
+        Logger.warn('treatment', 'CORS detected, using YouTube native volume control');
+        Logger.debug('treatment', corsError);
+
+        // Fallback: usar volumen nativo de YouTube (sin Web Audio routing)
+        // Usar volumen independiente fijo al 75% inicialmente
+        // El usuario puede ajustarlo con el slider de volumen YouTube
+        const youtubeVolumePercent = 75;
+        YouTubeManager.setVolume(youtubeVolumePercent);
+
+        // Verificar que el player está reproduciendo
+        const playerState = YouTubeManager.getPlayerState();
+        Logger.info('treatment', `YouTube player state: ${playerState} (1=playing, 2=paused)`);
+
+        if (playerState !== 1) {
+          // Si no está reproduciendo, forzar play
+          Logger.warn('treatment', 'YouTube not playing, forcing play...');
+          setTimeout(() => {
+            YouTubeManager.play();
+          }, 500);
+        }
+
+        // No hay control de Web Audio, pero el audio sigue funcionando desde el iframe
+        Logger.info('treatment', `✅ YouTube audio playing (native volume: ${youtubeVolumePercent}%)`);
+        Logger.warn('treatment', '⚠️ CORS fallback activo - usa el video flotante para controlar volumen visualmente');
+      }
+
+    } catch (error) {
+      Logger.error('treatment', 'Error connecting YouTube audio:', error);
+      this.youtubeEnabled = false;
+      throw error;
+    }
+  }
+
+  /**
+   * Disable YouTube and cleanup
+   */
+  async disableYouTube() {
+    if (!this.youtubeEnabled) {
+      return;
+    }
+
+    Logger.info('treatment', '🛑 Disabling YouTube...');
+
+    // Fade out suave
+    if (this.youtubeGain) {
+      const context = AudioContextManager.getContext();
+      const currentTime = context.currentTime;
+      this.youtubeGain.gain.cancelScheduledValues(currentTime);
+      this.youtubeGain.gain.setValueAtTime(this.youtubeGain.gain.value, currentTime);
+      this.youtubeGain.gain.linearRampToValueAtTime(0, currentTime + 1.5);
+    }
+
+    // Cleanup after fade out
+    setTimeout(() => {
+      try {
+        YouTubeManager.stop();
+
+        if (this.youtubeSource) {
+          this.youtubeSource.disconnect();
+          this.youtubeSource = null;
+        }
+
+        if (this.youtubeGain) {
+          this.youtubeGain.disconnect();
+          this.youtubeGain = null;
+        }
+
+        Logger.info('treatment', '✅ YouTube disabled and cleaned up');
+      } catch (error) {
+        Logger.error('treatment', 'Error during YouTube cleanup:', error);
+      }
+    }, 1600);
+
+    this.youtubeEnabled = false;
+    this.currentYouTubeVideoId = null;
+    this.currentYouTubeTitle = null;
   }
 }
 

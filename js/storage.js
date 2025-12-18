@@ -12,7 +12,8 @@ const Storage = {
     TREATMENT_PLAN: 'tinnitus_treatment_plan',
     TREATMENT_SESSIONS: 'tinnitus_treatment_sessions',
     SETTINGS: 'tinnitus_settings',
-    PROGRESS: 'tinnitus_progress'
+    PROGRESS: 'tinnitus_progress',
+    YOUTUBE_PREFS: 'tinnitus_youtube_preferences'
   },
 
   /**
@@ -346,6 +347,28 @@ const Storage = {
       console.error('Error importing data:', e);
       return false;
     }
+  },
+
+  /**
+   * Save YouTube preferences
+   * @param {Object} prefs - YouTube preferences data
+   */
+  saveYouTubePreferences(prefs) {
+    return this.set(this.KEYS.YOUTUBE_PREFS, {
+      ...prefs,
+      updatedAt: new Date().toISOString()
+    });
+  },
+
+  /**
+   * Get YouTube preferences
+   * @returns {Object} YouTube preferences
+   */
+  getYouTubePreferences() {
+    return this.get(this.KEYS.YOUTUBE_PREFS, {
+      lastUsed: {},  // { 'notched': 'videoId1', 'cr': 'videoId2', ... }
+      favorites: []  // Array of videoIds favoritos
+    });
   }
 };
 

@@ -1,0 +1,61 @@
+{
+  "note": "Para agregar tus propios videos: Copia el ID del video desde la URL de YouTube (youtube.com/watch?v=ID_AQUI) y agrégalo a este archivo",
+  "categories": [
+    {
+      "id": "nature",
+      "name": "Sonidos de Naturaleza",
+      "description": "Océano, lluvia, bosque, río - Sonidos relajantes",
+      "videos": [
+        {
+          "id": "UfcAVejslrU",
+          "title": "Océano Olas 8h",
+          "duration": "8:00:00"
+        },
+        {
+          "id": "q76bMs-NwRk",
+          "title": "Lluvia Suave 3h",
+          "duration": "3:00:00"
+        },
+        {
+          "id": "xNN7iTA57jM",
+          "title": "Bosque 10h",
+          "duration": "10:00:00"
+        }
+      ]
+    },
+    {
+      "id": "whitenoise",
+      "name": "White/Pink/Brown Noise",
+      "description": "Ruido blanco, rosa y marrón para masking",
+      "videos": [
+        {
+          "id": "nMfPqeZjc2c",
+          "title": "Pink Noise 10h",
+          "duration": "10:00:00"
+        },
+        {
+          "id": "GSaJXDsb3N8",
+          "title": "White Noise 12h",
+          "duration": "12:00:00"
+        },
+        {
+          "id": "RqzGzwTY-6w",
+          "title": "Brown Noise 8h",
+          "duration": "8:00:00"
+        }
+      ]
+    },
+    {
+      "id": "test",
+      "name": "Videos de Prueba",
+      "description": "Agrega aquí tus propios videos de YouTube (edita el JSON)",
+      "videos": [
+        {
+          "id": "jfKfPfyJRdk",
+          "title": "Prueba: Lluvia 2h",
+          "duration": "2:00:00"
+        }
+      ]
+    }
+  ]
+}

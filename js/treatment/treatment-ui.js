@@ -21,6 +21,11 @@ class TreatmentUI {
     this.progressBar = null;
     this.timeDisplay = null;
 
+    // YouTube integration
+    this.youtubePlaylist = null;
+    this.selectedCategory = null;
+    this.selectedVideoId = null;
+
     // Setup callbacks
     this.setupEngineCallbacks();
   }
@@ -41,6 +46,9 @@ class TreatmentUI {
 
     // Initialize engine with tinnitus frequency
     await this.engine.initialize(matchData.frequency);
+
+    // Load YouTube playlist (NUEVO)
+    await this.loadYouTubePlaylist();
 
     // Show welcome screen
     this.showWelcomeScreen();
@@ -338,6 +346,8 @@ class TreatmentUI {
 
         ${this.renderSubTypeSelector(therapyType)}
 
+        ${this.renderYouTubeCategorySelector()}
+
         <div class="card mb-6">
           <h3 class="font-bold mb-4">Control de Sesión</h3>
 
@@ -431,6 +441,8 @@ class TreatmentUI {
               <span>+5%</span>
             </div>
           </div>
+
+          ${this.renderYouTubeBalanceControl()}
 
           <!-- Play/Pause Control -->
           <div class="play-control mb-4">
@@ -1426,6 +1438,300 @@ class TreatmentUI {
 
     // Return to welcome screen
     this.showWelcomeScreen();
+  }
+
+  /**
+   * Load YouTube playlist from JSON
+   */
+  async loadYouTubePlaylist() {
+    try {
+      const response = await fetch('data/youtube-playlist.json');
+      this.youtubePlaylist = await response.json();
+      Logger.info('treatment-ui', `📋 YouTube playlist loaded: ${this.youtubePlaylist.categories.length} categories`);
+    } catch (error) {
+      Logger.error('treatment-ui', 'Error loading YouTube playlist:', error);
+      this.youtubePlaylist = { categories: [] }; // Fallback empty
+    }
+  }
+
+  /**
+   * Render YouTube category selector
+   */
+  renderYouTubeCategorySelector() {
+    if (!this.youtubePlaylist || this.youtubePlaylist.categories.length === 0) {
+      return '';
+    }
+
+    return `
+      <div class="card mb-6" id="youtube-category-selector">
+        <h3 class="font-bold mb-2">🎵 Música de Fondo (Opcional)</h3>
+        <p class="help-text mb-3">Selecciona una categoría para elegir música de YouTube que se mezclará con tu terapia</p>
+
+        <div class="button-group-inline" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem;">
+          ${this.youtubePlaylist.categories.map(cat => `
+            <button class="btn btn-outline btn-sm"
+                    data-category-id="${cat.id}"
+                    onclick="treatmentUI.selectYouTubeCategory('${cat.id}', this)">
+              ${cat.name}
+            </button>
+          `).join('')}
+          <button class="btn btn-outline btn-sm active"
+                  onclick="treatmentUI.disableYouTube(this)">
+            ❌ Sin música
+          </button>
+        </div>
+
+        <div id="youtube-video-list" class="mt-4"></div>
+      </div>
+    `;
+  }
+
+  /**
+   * Select YouTube category
+   */
+  selectYouTubeCategory(categoryId, button) {
+    this.selectedCategory = categoryId;
+
+    // Update button visuals
+    document.querySelectorAll('#youtube-category-selector button').forEach(btn =>
+      btn.classList.remove('active')
+    );
+    button.classList.add('active');
+
+    // Render videos from category
+    const category = this.youtubePlaylist.categories.find(c => c.id === categoryId);
+    const videoListDiv = document.getElementById('youtube-video-list');
+
+    if (!category || category.videos.length === 0) {
+      videoListDiv.innerHTML = '<p class="help-text">No hay videos en esta categoría</p>';
+      return;
+    }
+
+    videoListDiv.innerHTML = `
+      <h4 class="font-bold mb-2">${category.description}</h4>
+      <div class="button-group-inline" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.5rem;">
+        ${category.videos.map(video => `
+          <button class="btn btn-outline btn-sm"
+                  data-video-id="${video.id}"
+                  onclick="treatmentUI.selectYouTubeVideo('${video.id}', '${video.title.replace(/'/g, "\\'")}', this)"
+                  title="Duración: ${video.duration}">
+            ▶️ ${video.title}
+          </button>
+        `).join('')}
+      </div>
+    `;
+
+    // Restore previous selection if exists
+    const lastVideo = this.getLastYouTubeForTherapy();
+    if (lastVideo && lastVideo.categoryId === categoryId) {
+      const videoButton = videoListDiv.querySelector(`[data-video-id="${lastVideo.videoId}"]`);
+      if (videoButton) {
+        this.selectYouTubeVideo(lastVideo.videoId, lastVideo.title, videoButton);
+      }
+    }
+  }
+
+  /**
+   * Select YouTube video
+   */
+  async selectYouTubeVideo(videoId, title, button) {
+    this.selectedVideoId = videoId;
+
+    // Update button visuals
+    document.querySelectorAll('#youtube-video-list button').forEach(btn =>
+      btn.classList.remove('active')
+    );
+    button.classList.add('active');
+
+    // Show loading feedback
+    button.innerHTML = '⏳ Cargando...';
+    button.disabled = true;
+
+    // Enable YouTube in engine
+    try {
+      await this.engine.enableYouTube(videoId, title);
+
+      // Save preference (last video per therapy)
+      this.saveLastYouTubeForTherapy(videoId, title, this.selectedCategory);
+
+      // Show volume control
+      const balanceControl = document.getElementById('youtube-balance-control');
+      if (balanceControl) {
+        balanceControl.style.display = 'block';
+      }
+
+      // Show toggle button for floating video
+      const toggleButton = document.getElementById('youtube-toggle-float');
+      if (toggleButton) {
+        toggleButton.classList.add('active');
+      }
+
+      // Restore button
+      button.innerHTML = `▶️ ${title}`;
+      button.disabled = false;
+
+      Logger.info('treatment-ui', `✅ YouTube video selected: ${title}`);
+    } catch (error) {
+      Logger.error('treatment-ui', 'Error selecting YouTube video:', error);
+
+      // Restore button with error indicator
+      button.innerHTML = `❌ ${title}`;
+      button.disabled = false;
+      button.classList.remove('active');
+
+      // Show user-friendly error
+      const videoListDiv = document.getElementById('youtube-video-list');
+      const existingError = videoListDiv.querySelector('.error-message');
+      if (existingError) existingError.remove();
+
+      videoListDiv.insertAdjacentHTML('afterbegin', `
+        <div class="error-message" style="padding: 1rem; background: #fee; border: 1px solid #fcc; border-radius: 4px; margin-bottom: 1rem; color: #c00;">
+          <strong>⚠️ Este video no se puede reproducir</strong><br>
+          <small>El video puede tener restricciones de embedding. Por favor intenta con otro video.</small>
+        </div>
+      `);
+
+      // Auto-remove error after 5 seconds
+      setTimeout(() => {
+        const errorMsg = videoListDiv.querySelector('.error-message');
+        if (errorMsg) errorMsg.remove();
+      }, 5000);
+    }
+  }
+
+  /**
+   * Disable YouTube
+   */
+  async disableYouTube(button) {
+    // Update button visuals
+    document.querySelectorAll('#youtube-category-selector button').forEach(btn =>
+      btn.classList.remove('active')
+    );
+    button.classList.add('active');
+
+    // Clear video list
+    const videoListDiv = document.getElementById('youtube-video-list');
+    if (videoListDiv) videoListDiv.innerHTML = '';
+
+    // Disable YouTube in engine
+    await this.engine.disableYouTube();
+
+    // Hide volume control
+    const balanceControl = document.getElementById('youtube-balance-control');
+    if (balanceControl) {
+      balanceControl.style.display = 'none';
+    }
+
+    // Hide toggle button and floating video
+    const toggleButton = document.getElementById('youtube-toggle-float');
+    if (toggleButton) {
+      toggleButton.classList.remove('active');
+    }
+
+    const container = document.getElementById('youtube-player-container');
+    if (container) {
+      container.classList.remove('floating');
+      container.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden;';
+    }
+
+    this.selectedCategory = null;
+    this.selectedVideoId = null;
+
+    Logger.info('treatment-ui', '❌ YouTube disabled');
+  }
+
+  /**
+   * Render YouTube volume control (independent volume)
+   */
+  renderYouTubeBalanceControl() {
+    return `
+      <div class="mb-6" id="youtube-balance-control" style="display: none;">
+        <label class="label">🔊 Volumen Música YouTube (Independiente)</label>
+        <input type="range"
+               id="youtube-volume-slider"
+               class="slider"
+               min="0" max="100" value="75" step="5"
+               oninput="treatmentUI.updateYouTubeVolume(this.value)">
+        <div class="slider-labels">
+          <span>0%</span>
+          <span id="youtube-volume-value">75%</span>
+          <span>100%</span>
+        </div>
+        <p class="help-text mt-1">Volumen independiente para la música (no afecta la terapia)</p>
+      </div>
+    `;
+  }
+
+  /**
+   * Update YouTube volume (independent control)
+   */
+  updateYouTubeVolume(value) {
+    const volumePercent = parseInt(value);
+
+    // Update YouTube native volume directly
+    YouTubeManager.setVolume(volumePercent);
+
+    // Update display
+    const valueSpan = document.getElementById('youtube-volume-value');
+    if (valueSpan) {
+      valueSpan.textContent = `${volumePercent}%`;
+    }
+
+    Logger.info('treatment-ui', `YouTube volume updated: ${volumePercent}%`);
+  }
+
+  /**
+   * Toggle floating video player
+   */
+  toggleFloatingVideo() {
+    const container = document.getElementById('youtube-player-container');
+    const button = document.getElementById('youtube-toggle-float');
+    const icon = document.getElementById('youtube-float-icon');
+
+    if (!container || !button) return;
+
+    const isFloating = container.classList.contains('floating');
+
+    if (isFloating) {
+      // Hide floating video
+      container.classList.remove('floating');
+      container.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden;';
+      button.innerHTML = '<span id="youtube-float-icon">📺</span> Ver video';
+      Logger.info('treatment-ui', 'Floating video hidden');
+    } else {
+      // Show floating video
+      container.classList.add('floating');
+      container.style.cssText = ''; // Clear inline styles to use CSS class
+      button.innerHTML = '<span id="youtube-float-icon">✖️</span> Ocultar video';
+      Logger.info('treatment-ui', 'Floating video shown');
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   */
+  updateYouTubeBalance(value) {
+    // Redirect to volume control
+    this.updateYouTubeVolume(value);
+  }
+
+  /**
+   * Save last YouTube video for current therapy type
+   */
+  saveLastYouTubeForTherapy(videoId, title, categoryId) {
+    const key = `youtube_last_${this.engine.currentTherapy}`;
+    const data = { videoId, title, categoryId, timestamp: Date.now() };
+    localStorage.setItem(key, JSON.stringify(data));
+    Logger.debug('treatment-ui', `Saved YouTube preference for ${this.engine.currentTherapy}`);
+  }
+
+  /**
+   * Get last YouTube video for current therapy type
+   */
+  getLastYouTubeForTherapy() {
+    const key = `youtube_last_${this.engine.currentTherapy}`;
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
   }
 }
 

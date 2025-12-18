@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema IA revolucionario para eliminar tu tinnitus. Terapia científica personalizada por solo $1/mes. ¡Recupera tu silencio hoy!">
+  <title>🔥 Elimina Tu Tinnitus en 30 Días | Sistema IA Revolucionario</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+
+  <style>
+    /* Landing Page Aggressive Styles */
+    :root {
+      --accent-red: #ff3366;
+      --accent-gold: #ffd700;
+      --success-green: #00cc66;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    /* Hero Section */
+    .hero-landing {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white;
+      padding: 4rem 0 6rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-landing::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(255, 51, 102, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(0, 204, 102, 0.1) 0%, transparent 50%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-red);
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, #ffd700 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+
+    .hero-features {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+
+    .hero-feature {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .checkmark {
+      color: var(--success-green);
+      font-size: 1.5rem;
+    }
+
+    .cta-primary {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent-red) 0%, #ff6b6b 100%);
+      color: white;
+      padding: 1.5rem 3rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(255, 51, 102, 0.4);
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 10px 30px rgba(255, 51, 102, 0.4); }
+      50% { box-shadow: 0 10px 50px rgba(255, 51, 102, 0.8); }
+    }
+
+    .cta-primary:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 15px 50px rgba(255, 51, 102, 0.6);
+    }
+
+    .money-back {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Countdown Timer */
+    .countdown-section {
+      background: var(--accent-red);
+      color: white;
+      padding: 1.5rem 0;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .countdown {
+      display: inline-flex;
+      gap: 1rem;
+      margin-left: 1rem;
+    }
+
+    .countdown-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .countdown-number {
+      font-size: 2rem;
+      font-weight: 900;
+      background: white;
+      color: var(--accent-red);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      min-width: 60px;
+    }
+
+    .countdown-label {
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+
+    /* Pain Section */
+    .pain-section {
+      padding: 5rem 0;
+      background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .pain-title {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 3rem;
+      color: #1a1a2e;
+    }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .pain-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      border-top: 4px solid var(--accent-red);
+    }
+
+    .pain-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .pain-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: #1a1a2e;
+    }
+
+    /* Solution Section */
+    .solution-section {
+      padding: 5rem 0;
+      background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+      color: white;
+    }
+
+    .solution-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 3rem auto 0;
+    }
+
+    .feature-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 2.5rem;
+      border-radius: 15px;
+      border: 2px solid rgba(255,255,255,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      border-color: var(--accent-gold);
+      box-shadow: 0 15px 40px rgba(255,215,0,0.3);
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: var(--accent-gold);
+    }
+
+    .feature-new {
+      display: inline-block;
+      background: var(--accent-red);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      margin-left: 0.5rem;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Pricing Section */
+    .pricing-section {
+      padding: 5rem 0;
+      background: white;
+      text-align: center;
+    }
+
+    .pricing-title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #1a1a2e;
+    }
+
+    .pricing-subtitle {
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 3rem;
+    }
+
+    .pricing-card {
+      max-width: 500px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border: 3px solid var(--accent-gold);
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pricing-badge {
+      position: absolute;
+      top: 20px;
+      right: -30px;
+      background: var(--accent-red);
+      color: white;
+      padding: 0.5rem 3rem;
+      font-weight: bold;
+      transform: rotate(45deg);
+      font-size: 0.9rem;
+    }
+
+    .price-original {
+      font-size: 1.5rem;
+      text-decoration: line-through;
+      color: #999;
+      margin-bottom: 0.5rem;
+    }
+
+    .price-current {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--accent-red);
+      line-height: 1;
+    }
+
+    .price-currency {
+      font-size: 2rem;
+      vertical-align: super;
+    }
+
+    .price-period {
+      font-size: 1.5rem;
+      color: #666;
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin: 2rem 0;
+      text-align: left;
+    }
+
+    .pricing-features li {
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .pricing-features li:last-child {
+      border-bottom: none;
+    }
+
+    /* Testimonials */
+    .testimonials-section {
+      padding: 5rem 0;
+      background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 3rem auto 0;
+    }
+
+    .testimonial-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .testimonial-stars {
+      color: var(--accent-gold);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .testimonial-text {
+      font-style: italic;
+      color: #333;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .testimonial-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+
+    .testimonial-info {
+      text-align: left;
+    }
+
+    .testimonial-name {
+      font-weight: bold;
+      color: #1a1a2e;
+    }
+
+    .testimonial-location {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    /* Lead Capture Form */
+    .form-section {
+      padding: 5rem 0;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 20px;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .form-title {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 1rem;
+      color: var(--accent-gold);
+    }
+
+    .form-subtitle {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.95);
+      color: #1a1a2e;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    }
+
+    .form-submit {
+      width: 100%;
+      padding: 1.5rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, var(--accent-red) 0%, #ff6b6b 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(255, 51, 102, 0.4);
+    }
+
+    .form-submit:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(255, 51, 102, 0.6);
+    }
+
+    .form-privacy {
+      text-align: center;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      opacity: 0.8;
+    }
+
+    /* Guarantee Section */
+    .guarantee-section {
+      background: var(--success-green);
+      color: white;
+      padding: 3rem 0;
+      text-align: center;
+    }
+
+    .guarantee-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .guarantee-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .guarantee-title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    /* Sticky CTA */
+    .sticky-cta {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(26, 26, 46, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+      display: none;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sticky-cta.visible {
+      display: block;
+    }
+
+    .sticky-cta-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      gap: 2rem;
+    }
+
+    .sticky-cta-text {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+
+      .hero-features {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .cta-primary {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+      }
+
+      .countdown {
+        flex-wrap: wrap;
+      }
+
+      .price-current {
+        font-size: 3rem;
+      }
+
+      .sticky-cta-content {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .sticky-cta-text {
+        font-size: 1rem;
+      }
+    }
+
+    /* Success Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 3rem;
+      border-radius: 20px;
+      max-width: 500px;
+      text-align: center;
+      animation: modalPop 0.3s ease;
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-title {
+      font-size: 2rem;
+      color: var(--success-green);
+      margin-bottom: 1rem;
+    }
+
+    .modal-text {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <section class="hero-landing">
+    <div class="container">
+      <div class="hero-content">
+        <div class="badge">🔥 OFERTA LIMITADA - SOLO HOY</div>
+        <h1 class="hero-title">
+          Elimina Tu Tinnitus en 30 Días con Sistema IA Revolucionario
+        </h1>
+        <p class="hero-subtitle">
+          Miles de personas ya recuperaron su silencio con nuestra terapia científica personalizada.
+          <strong>Ahora es tu turno.</strong>
+        </p>
+
+        <div class="hero-features">
+          <div class="hero-feature">
+            <span class="checkmark">✓</span>
+            <span>Algoritmo IA Adaptativo</span>
+          </div>
+          <div class="hero-feature">
+            <span class="checkmark">✓</span>
+            <span>Resultados en 30 Días</span>
+          </div>
+          <div class="hero-feature">
+            <span class="checkmark">✓</span>
+            <span>100% Científico</span>
+          </div>
+        </div>
+
+        <button class="cta-primary" onclick="scrollToForm()">
+          🚀 QUIERO ELIMINAR MI TINNITUS AHORA
+        </button>
+
+        <p class="money-back">
+          💰 Garantía de devolución de dinero en 30 días | 🔒 Pago seguro
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Countdown Timer -->
+  <div class="countdown-section">
+    <div class="container">
+      ⚡ Esta oferta expira en:
+      <div class="countdown">
+        <div class="countdown-item">
+          <div class="countdown-number" id="hours">23</div>
+          <div class="countdown-label">HORAS</div>
+        </div>
+        <div class="countdown-item">
+          <div class="countdown-number" id="minutes">59</div>
+          <div class="countdown-label">MIN</div>
+        </div>
+        <div class="countdown-item">
+          <div class="countdown-number" id="seconds">59</div>
+          <div class="countdown-label">SEG</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pain Section -->
+  <section class="pain-section">
+    <div class="container">
+      <h2 class="pain-title">¿Estás Cansado de Sufrir con el Tinnitus?</h2>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <div class="pain-icon">😫</div>
+          <h3>Insomnio Constante</h3>
+          <p>El zumbido te impide dormir. Despiertas agotado cada mañana.</p>
+        </div>
+        <div class="pain-card">
+          <div class="pain-icon">😰</div>
+          <h3>Ansiedad y Estrés</h3>
+          <p>No puedes concentrarte. El ruido te consume mentalmente.</p>
+        </div>
+        <div class="pain-card">
+          <div class="pain-icon">😢</div>
+          <h3>Vida Social Arruinada</h3>
+          <p>Evitas reuniones. Te aíslas. Tu familia no entiende tu dolor.</p>
+        </div>
+        <div class="pain-card">
+          <div class="pain-icon">💸</div>
+          <h3>Miles en Tratamientos</h3>
+          <p>Has gastado fortunas en doctores. Nada funciona. Te sientes perdido.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solution Section -->
+  <section class="solution-section">
+    <div class="container">
+      <h2 class="hero-title" style="text-align: center; margin-bottom: 2rem;">
+        La Solución Definitiva Está Aquí
+      </h2>
+      <p style="text-align: center; font-size: 1.3rem; max-width: 800px; margin: 0 auto 3rem;">
+        Nuestro sistema IA analiza tu tinnitus específico y crea un tratamiento personalizado
+        en segundos. <strong>Sin medicamentos. Sin cirugías. Solo ciencia pura.</strong>
+      </p>
+
+      <div class="solution-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3 class="feature-title">Algoritmo IA Adaptativo</h3>
+          <p>Inteligencia artificial analiza tu frecuencia exacta de tinnitus con precisión de 1 Hz. Sistema que aprende de ti.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3 class="feature-title">Audiometría Profesional</h3>
+          <p>13 frecuencias evaluadas con algoritmo Hughson-Westlake. Identifica pérdida auditiva oculta en minutos.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎵</div>
+          <h3 class="feature-title">6 Terapias Científicas</h3>
+          <p>Notched Sound, CR Neuromodulation, Masking, Ambientes + Híbridos. Todo en un solo lugar.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎥</div>
+          <h3 class="feature-title">
+            Música YouTube Integrada
+            <span class="feature-new">NUEVO</span>
+          </h3>
+          <p>Combina terapia con música relajante de YouTube. Control independiente de volumen. Video flotante opcional.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">
+            Cambio de Sonidos en Vivo
+            <span class="feature-new">NUEVO</span>
+          </h3>
+          <p>Cambia entre ruido blanco, rosa, marrón, ambientes naturales SIN interrumpir tu sesión. Flujo continuo perfecto.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3 class="feature-title">5 Visualizaciones Relajantes</h3>
+          <p>Fractales, ondas, partículas, mandalas, auroras. Meditación visual mientras tratas tu tinnitus.</p>
+        </div>
+
+        <!-- Feature 7 -->
+        <div class="feature-card">
+          <div class="feature-icon">🔊</div>
+          <h3 class="feature-title">Balance Estéreo L-R</h3>
+          <p>Tinnitus unilateral? Ajusta el balance izquierdo-derecho en tiempo real. Personalización total.</p>
+        </div>
+
+        <!-- Feature 8 -->
+        <div class="feature-card">
+          <div class="feature-icon">💾</div>
+          <h3 class="feature-title">Grabación de Sesiones WAV</h3>
+          <p>Graba tus terapias en audio profesional. Usa offline en cualquier dispositivo. Portabilidad total.</p>
+        </div>
+
+        <!-- Feature 9 -->
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3 class="feature-title">Seguimiento Inteligente</h3>
+          <p>Historial completo de sesiones. Gráficas de progreso. Análisis IA de tu evolución.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="pricing-section">
+    <div class="container">
+      <h2 class="pricing-title">Precio Especial de Lanzamiento</h2>
+      <p class="pricing-subtitle">Solo para los primeros 100 usuarios</p>
+
+      <div class="pricing-card">
+        <div class="pricing-badge">OFERTA HOY</div>
+
+        <div class="price-original">Antes: $49.99/mes</div>
+        <div class="price-current">
+          <span class="price-currency">$</span>1<span class="price-period">/mes</span>
+        </div>
+
+        <ul class="pricing-features">
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Acceso ilimitado</strong> a todas las terapias</span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Sistema IA completo</strong> con audiometría</span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Música YouTube integrada</strong> (NUEVO)</span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Grabación de sesiones</strong> en audio WAV</span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>5 visualizaciones relajantes</strong></span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Actualizaciones automáticas</strong> de por vida</span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Soporte prioritario</strong> 24/7</span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Garantía 30 días</strong> devolución de dinero</span>
+          </li>
+        </ul>
+
+        <button class="cta-primary" onclick="scrollToForm()">
+          🔥 SÍ, QUIERO MI ACCESO POR $1/MES
+        </button>
+
+        <p style="margin-top: 1.5rem; color: #666; font-size: 0.9rem;">
+          ⏰ Solo quedan 23 cupos disponibles a este precio
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="testimonials-section">
+    <div class="container">
+      <h2 class="pain-title">Lo Que Dicen Nuestros Usuarios</h2>
+
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">
+            "Después de 8 años sufriendo con tinnitus, este sistema cambió mi vida. En 3 semanas
+            el zumbido bajó un 70%. Puedo dormir de nuevo. INCREÍBLE."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">MR</div>
+            <div class="testimonial-info">
+              <div class="testimonial-name">María Rodríguez</div>
+              <div class="testimonial-location">Madrid, España</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">
+            "Probé todo: pastillas, terapias caras, acupuntura. Nada funcionó. Con este sistema
+            IA en solo 30 días mi tinnitus casi desapareció. Valió cada centavo."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">JL</div>
+            <div class="testimonial-info">
+              <div class="testimonial-name">Jorge López</div>
+              <div class="testimonial-location">Buenos Aires, Argentina</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">
+            "La función nueva de YouTube es genial. Escucho música mientras hago terapia.
+            Ya no es aburrido. Mi ansiedad bajó y mi tinnitus también. ¡Gracias!"
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">AC</div>
+            <div class="testimonial-info">
+              <div class="testimonial-name">Ana Castillo</div>
+              <div class="testimonial-location">Ciudad de México, México</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Guarantee Section -->
+  <section class="guarantee-section">
+    <div class="container">
+      <div class="guarantee-content">
+        <div class="guarantee-icon">🛡️</div>
+        <h2 class="guarantee-title">Garantía Incondicional de 30 Días</h2>
+        <p style="font-size: 1.2rem; line-height: 1.6;">
+          Si en 30 días no ves resultados, te devolvemos el 100% de tu dinero.
+          Sin preguntas. Sin complicaciones. <strong>Riesgo CERO para ti.</strong>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lead Capture Form -->
+  <section class="form-section" id="form">
+    <div class="container">
+      <div class="form-container">
+        <h2 class="form-title">🎁 Recibe Tu Acceso Especial</h2>
+        <p class="form-subtitle">
+          Déjanos tu email y recibe información completa + descuento exclusivo del 98%
+        </p>
+
+        <form id="leadForm" onsubmit="handleSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="name">Tu Nombre</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              class="form-input"
+              placeholder="Ej: Juan Pérez"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Tu Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-input"
+              placeholder="tu@email.com"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="severity">¿Qué tan severo es tu tinnitus?</label>
+            <select id="severity" name="severity" class="form-input" required>
+              <option value="">Selecciona una opción</option>
+              <option value="leve">Leve - Solo en silencio</option>
+              <option value="moderado">Moderado - Afecta mi día a día</option>
+              <option value="severo">Severo - No puedo dormir</option>
+              <option value="extremo">Extremo - Afecta mi vida completamente</option>
+            </select>
+          </div>
+
+          <button type="submit" class="form-submit">
+            🚀 QUIERO MI ACCESO POR $1/MES
+          </button>
+
+          <p class="form-privacy">
+            🔒 Tus datos están protegidos. No compartimos tu información con terceros.
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sticky CTA -->
+  <div class="sticky-cta" id="stickyCTA">
+    <div class="sticky-cta-content">
+      <div class="sticky-cta-text">
+        🔥 Oferta especial: $1/mes (antes $49.99)
+      </div>
+      <button class="cta-primary" onclick="scrollToForm()" style="font-size: 1rem; padding: 1rem 2rem;">
+        QUIERO MI ACCESO AHORA
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal" id="successModal">
+    <div class="modal-content">
+      <div class="modal-icon">🎉</div>
+      <h3 class="modal-title">¡Registro Exitoso!</h3>
+      <p class="modal-text">
+        Revisa tu email en los próximos minutos. Te enviamos toda la información
+        y tu link de acceso especial con el descuento del 98%.
+      </p>
+      <button class="cta-primary" onclick="closeModal()">
+        ENTENDIDO
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Countdown Timer
+    function updateCountdown() {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(23, 59, 59, 999);
+
+      const diff = midnight - now;
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+      document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    // Sticky CTA Show/Hide
+    window.addEventListener('scroll', () => {
+      const stickyCTA = document.getElementById('stickyCTA');
+      if (window.scrollY > 800) {
+        stickyCTA.classList.add('visible');
+      } else {
+        stickyCTA.classList.remove('visible');
+      }
+    });
+
+    // Smooth Scroll to Form
+    function scrollToForm() {
+      document.getElementById('form').scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+
+      // Focus on name input
+      setTimeout(() => {
+        document.getElementById('name').focus();
+      }, 500);
+    }
+
+    // Form Submission
+    function handleSubmit(event) {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        severity: formData.get('severity'),
+        timestamp: new Date().toISOString(),
+        source: 'landing1'
+      };
+
+      // Store in localStorage (en producción, enviar a backend)
+      const leads = JSON.parse(localStorage.getItem('tinnitus_leads') || '[]');
+      leads.push(data);
+      localStorage.setItem('tinnitus_leads', JSON.stringify(leads));
+
+      console.log('Lead capturado:', data);
+
+      // Show success modal
+      document.getElementById('successModal').classList.add('active');
+
+      // Reset form
+      event.target.reset();
+
+      // Track conversion (Google Analytics, Facebook Pixel, etc.)
+      // gtag('event', 'conversion', { 'send_to': 'AW-CONVERSION_ID' });
+    }
+
+    function closeModal() {
+      document.getElementById('successModal').classList.remove('active');
+    }
+
+    // Close modal on outside click
+    document.getElementById('successModal').addEventListener('click', (e) => {
+      if (e.target.id === 'successModal') {
+        closeModal();
+      }
+    });
+
+    // Analytics Events
+    document.querySelectorAll('.cta-primary').forEach(btn => {
+      btn.addEventListener('click', () => {
+        console.log('CTA clicked:', btn.textContent.trim());
+        // Track event: gtag('event', 'cta_click', { 'location': 'hero' });
+      });
+    });
+  </script>
+</body>
+</html>
