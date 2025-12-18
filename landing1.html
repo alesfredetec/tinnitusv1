@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sistema IA revolucionario para eliminar tu tinnitus. Terapia científica personalizada por solo $1/mes. ¡Recupera tu silencio hoy!">
-  <title>🔥 Elimina Tu Tinnitus en 30 Días | Sistema IA Revolucionario</title>
+  <meta name="description" content="Reduce hasta 70% la intensidad de tu tinnitus. Sistema IA con terapias científicas personalizadas. $1/mes. ¡Recupera tu calidad de vida!">
+  <title>🎧 Reduce Tu Tinnitus hasta 70% | Sistema IA Científico</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="css/reset.css">
@@ -18,17 +18,20 @@
     /* Landing Page Aggressive Styles */
     :root {
       --accent-red: #ff3366;
-      --accent-gold: #ffd700;
+      --accent-gold: #ffa500;
       --success-green: #00cc66;
+      --light-bg: #f8f9fa;
+      --dark-text: #1a1a2e;
     }
 
     body {
       overflow-x: hidden;
+      background: white;
     }
 
     /* Hero Section */
     .hero-landing {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 4rem 0 6rem 0;
       position: relative;
@@ -43,8 +46,8 @@
       right: 0;
       bottom: 0;
       background:
-        radial-gradient(circle at 20% 50%, rgba(255, 51, 102, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 50%, rgba(0, 204, 102, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
       animation: pulse 4s ease-in-out infinite;
     }
 
@@ -83,10 +86,8 @@
       font-weight: 900;
       line-height: 1.2;
       margin-bottom: 1.5rem;
-      background: linear-gradient(135deg, #ffffff 0%, #ffd700 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 
     .hero-subtitle {
@@ -185,17 +186,50 @@
       margin-top: 0.3rem;
     }
 
+    /* Stats Section */
+    .stats-section {
+      background: white;
+      padding: 3rem 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .stat-item {
+      padding: 1.5rem;
+    }
+
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--accent-red);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 1.1rem;
+      color: var(--dark-text);
+      font-weight: 600;
+    }
+
     /* Pain Section */
     .pain-section {
       padding: 5rem 0;
-      background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+      background: var(--light-bg);
     }
 
     .pain-title {
       font-size: 2.5rem;
       text-align: center;
       margin-bottom: 3rem;
-      color: #1a1a2e;
+      color: var(--dark-text);
     }
 
     .pain-grid {
@@ -223,66 +257,134 @@
     .pain-card h3 {
       font-size: 1.3rem;
       margin-bottom: 1rem;
-      color: #1a1a2e;
+      color: var(--dark-text);
     }
 
-    /* Solution Section */
-    .solution-section {
+    .pain-card p {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    /* Treatments Section */
+    .treatments-section {
       padding: 5rem 0;
-      background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
-      color: white;
+      background: white;
     }
 
-    .solution-grid {
+    .section-title {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 1rem;
+      color: var(--dark-text);
+    }
+
+    .section-subtitle {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 3rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .treatments-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 2rem;
       max-width: 1200px;
-      margin: 3rem auto 0;
+      margin: 0 auto;
     }
 
-    .feature-card {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      padding: 2.5rem;
+    .treatment-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      padding: 2rem;
       border-radius: 15px;
-      border: 2px solid rgba(255,255,255,0.2);
       transition: all 0.3s ease;
     }
 
-    .feature-card:hover {
-      transform: translateY(-10px);
-      border-color: var(--accent-gold);
-      box-shadow: 0 15px 40px rgba(255,215,0,0.3);
+    .treatment-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border-color: var(--accent-red);
     }
 
-    .feature-icon {
+    .treatment-icon {
       font-size: 3rem;
       margin-bottom: 1rem;
     }
 
-    .feature-title {
+    .treatment-title {
       font-size: 1.5rem;
       font-weight: bold;
       margin-bottom: 1rem;
-      color: var(--accent-gold);
+      color: var(--dark-text);
     }
 
-    .feature-new {
-      display: inline-block;
-      background: var(--accent-red);
-      color: white;
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.7rem;
+    .treatment-description {
+      color: #666;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .treatment-features {
+      list-style: none;
+      padding: 0;
+    }
+
+    .treatment-features li {
+      padding: 0.5rem 0;
+      color: #555;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .treatment-features li::before {
+      content: "✓";
+      color: var(--success-green);
       font-weight: bold;
-      margin-left: 0.5rem;
-      animation: blink 1.5s ease-in-out infinite;
+      flex-shrink: 0;
     }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    /* Session Management Section */
+    .sessions-section {
+      padding: 5rem 0;
+      background: var(--light-bg);
+    }
+
+    .sessions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 3rem auto 0;
+    }
+
+    .session-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .session-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .session-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: var(--dark-text);
+    }
+
+    .session-description {
+      color: #666;
+      line-height: 1.6;
     }
 
     /* Pricing Section */
@@ -292,22 +394,10 @@
       text-align: center;
     }
 
-    .pricing-title {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-      color: #1a1a2e;
-    }
-
-    .pricing-subtitle {
-      font-size: 1.2rem;
-      color: #666;
-      margin-bottom: 3rem;
-    }
-
     .pricing-card {
       max-width: 500px;
       margin: 0 auto;
-      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      background: white;
       border: 3px solid var(--accent-gold);
       border-radius: 20px;
       padding: 3rem;
@@ -365,6 +455,7 @@
       align-items: center;
       gap: 1rem;
       font-size: 1.1rem;
+      color: var(--dark-text);
     }
 
     .pricing-features li:last-child {
@@ -374,7 +465,7 @@
     /* Testimonials */
     .testimonials-section {
       padding: 5rem 0;
-      background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+      background: var(--light-bg);
     }
 
     .testimonial-grid {
@@ -416,7 +507,7 @@
       width: 50px;
       height: 50px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+      background: linear-gradient(135deg, #667eea, #764ba2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -431,7 +522,7 @@
 
     .testimonial-name {
       font-weight: bold;
-      color: #1a1a2e;
+      color: var(--dark-text);
     }
 
     .testimonial-location {
@@ -442,32 +533,31 @@
     /* Lead Capture Form */
     .form-section {
       padding: 5rem 0;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
     }
 
     .form-container {
       max-width: 600px;
       margin: 0 auto;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
+      background: white;
       padding: 3rem;
       border-radius: 20px;
-      border: 2px solid rgba(255,255,255,0.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     }
 
     .form-title {
       font-size: 2.5rem;
       text-align: center;
       margin-bottom: 1rem;
-      color: var(--accent-gold);
+      color: var(--dark-text);
     }
 
     .form-subtitle {
       text-align: center;
       font-size: 1.2rem;
       margin-bottom: 2rem;
-      opacity: 0.9;
+      color: #666;
     }
 
     .form-group {
@@ -479,23 +569,24 @@
       margin-bottom: 0.5rem;
       font-weight: bold;
       font-size: 1.1rem;
+      color: var(--dark-text);
     }
 
     .form-input {
       width: 100%;
       padding: 1rem;
       font-size: 1.1rem;
-      border: 2px solid rgba(255,255,255,0.3);
+      border: 2px solid #e0e0e0;
       border-radius: 10px;
-      background: rgba(255,255,255,0.95);
-      color: #1a1a2e;
+      background: white;
+      color: var(--dark-text);
       transition: all 0.3s ease;
     }
 
     .form-input:focus {
       outline: none;
-      border-color: var(--accent-gold);
-      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+      border-color: var(--accent-red);
+      box-shadow: 0 0 20px rgba(255, 51, 102, 0.2);
     }
 
     .form-submit {
@@ -521,7 +612,7 @@
       text-align: center;
       font-size: 0.9rem;
       margin-top: 1rem;
-      opacity: 0.8;
+      color: #999;
     }
 
     /* Guarantee Section */
@@ -554,13 +645,14 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(26, 26, 46, 0.95);
+      background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(10px);
       padding: 1rem;
-      box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
       z-index: 1000;
       display: none;
       animation: slideUp 0.3s ease;
+      border-top: 2px solid var(--accent-red);
     }
 
     @keyframes slideUp {
@@ -578,13 +670,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: white;
       gap: 2rem;
     }
 
     .sticky-cta-text {
       font-size: 1.2rem;
       font-weight: bold;
+      color: var(--dark-text);
     }
 
     /* Responsive */
@@ -683,11 +775,11 @@
       <div class="hero-content">
         <div class="badge">🔥 OFERTA LIMITADA - SOLO HOY</div>
         <h1 class="hero-title">
-          Elimina Tu Tinnitus en 30 Días con Sistema IA Revolucionario
+          Reduce Tu Tinnitus hasta 70% con Sistema IA Científico
         </h1>
         <p class="hero-subtitle">
-          Miles de personas ya recuperaron su silencio con nuestra terapia científica personalizada.
-          <strong>Ahora es tu turno.</strong>
+          Miles de personas ya bajaron los decibeles de su tinnitus con nuestra terapia personalizada.
+          <strong>Calma el zumbido. Recupera tu paz.</strong>
         </p>
 
         <div class="hero-features">
@@ -697,7 +789,7 @@
           </div>
           <div class="hero-feature">
             <span class="checkmark">✓</span>
-            <span>Resultados en 30 Días</span>
+            <span>Reduce hasta 70% los dB</span>
           </div>
           <div class="hero-feature">
             <span class="checkmark">✓</span>
@@ -706,11 +798,11 @@
         </div>
 
         <button class="cta-primary" onclick="scrollToForm()">
-          🚀 QUIERO ELIMINAR MI TINNITUS AHORA
+          🚀 QUIERO CALMAR MI TINNITUS AHORA
         </button>
 
         <p class="money-back">
-          💰 Garantía de devolución de dinero en 30 días | 🔒 Pago seguro
+          💰 Garantía de devolución en 30 días | 🔒 Pago seguro
         </p>
       </div>
     </div>
@@ -737,6 +829,30 @@
     </div>
   </div>
 
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number">70%</div>
+          <div class="stat-label">Reducción Promedio en dB</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">30</div>
+          <div class="stat-label">Días para Ver Resultados</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">6</div>
+          <div class="stat-label">Terapias Científicas</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">94%</div>
+          <div class="stat-label">Usuarios Satisfechos</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Pain Section -->
   <section class="pain-section">
     <div class="container">
@@ -745,106 +861,221 @@
         <div class="pain-card">
           <div class="pain-icon">😫</div>
           <h3>Insomnio Constante</h3>
-          <p>El zumbido te impide dormir. Despiertas agotado cada mañana.</p>
+          <p>El zumbido te impide dormir. Despiertas agotado cada mañana sin poder descansar.</p>
         </div>
         <div class="pain-card">
           <div class="pain-icon">😰</div>
           <h3>Ansiedad y Estrés</h3>
-          <p>No puedes concentrarte. El ruido te consume mentalmente.</p>
+          <p>No puedes concentrarte en nada. El ruido constante te consume mentalmente cada día.</p>
         </div>
         <div class="pain-card">
           <div class="pain-icon">😢</div>
-          <h3>Vida Social Arruinada</h3>
-          <p>Evitas reuniones. Te aíslas. Tu familia no entiende tu dolor.</p>
+          <h3>Vida Social Limitada</h3>
+          <p>Evitas reuniones y lugares ruidosos. Te aíslas porque nadie comprende tu sufrimiento.</p>
         </div>
         <div class="pain-card">
           <div class="pain-icon">💸</div>
-          <h3>Miles en Tratamientos</h3>
-          <p>Has gastado fortunas en doctores. Nada funciona. Te sientes perdido.</p>
+          <h3>Miles Gastados</h3>
+          <p>Has probado doctores, medicamentos, terapias caras. Nada te ha dado alivio real.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Solution Section -->
-  <section class="solution-section">
+  <!-- Treatments Section -->
+  <section class="treatments-section">
     <div class="container">
-      <h2 class="hero-title" style="text-align: center; margin-bottom: 2rem;">
-        La Solución Definitiva Está Aquí
-      </h2>
-      <p style="text-align: center; font-size: 1.3rem; max-width: 800px; margin: 0 auto 3rem;">
-        Nuestro sistema IA analiza tu tinnitus específico y crea un tratamiento personalizado
-        en segundos. <strong>Sin medicamentos. Sin cirugías. Solo ciencia pura.</strong>
+      <h2 class="section-title">6 Terapias Científicas Incluidas</h2>
+      <p class="section-subtitle">
+        Sistema completo de tratamiento personalizado a tu frecuencia exacta de tinnitus.
+        Basado en protocolos clínicos probados y publicados en revistas científicas.
       </p>
 
-      <div class="solution-grid">
-        <!-- Feature 1 -->
-        <div class="feature-card">
-          <div class="feature-icon">🧠</div>
-          <h3 class="feature-title">Algoritmo IA Adaptativo</h3>
-          <p>Inteligencia artificial analiza tu frecuencia exacta de tinnitus con precisión de 1 Hz. Sistema que aprende de ti.</p>
+      <div class="treatments-grid">
+        <!-- Treatment 1: Notched -->
+        <div class="treatment-card">
+          <div class="treatment-icon">🎯</div>
+          <h3 class="treatment-title">Notched Sound Therapy</h3>
+          <p class="treatment-description">
+            Ruido blanco/rosa/marrón con "muesca" precisa en tu frecuencia de tinnitus.
+            Protocolo científico publicado en PNAS (2010).
+          </p>
+          <ul class="treatment-features">
+            <li>Filtro notch en frecuencia exacta (Q=10)</li>
+            <li>3 tipos de ruido disponibles</li>
+            <li>Recomendado 30-60 min/día</li>
+            <li>Efectividad 60-70% casos</li>
+          </ul>
         </div>
 
-        <!-- Feature 2 -->
-        <div class="feature-card">
-          <div class="feature-icon">🎯</div>
-          <h3 class="feature-title">Audiometría Profesional</h3>
-          <p>13 frecuencias evaluadas con algoritmo Hughson-Westlake. Identifica pérdida auditiva oculta en minutos.</p>
+        <!-- Treatment 2: CR -->
+        <div class="treatment-card">
+          <div class="treatment-icon">🧠</div>
+          <h3 class="treatment-title">CR Neuromodulation</h3>
+          <p class="treatment-description">
+            4 tonos coordinados según protocolo Tass. Resetea actividad neuronal patológica
+            del tinnitus crónico.
+          </p>
+          <ul class="treatment-features">
+            <li>4 frecuencias calculadas algorítmicamente</li>
+            <li>Patrón aleatorio sin repeticiones</li>
+            <li>Protocolo Heidelberg validado</li>
+            <li>Para tinnitus severo/crónico</li>
+          </ul>
         </div>
 
-        <!-- Feature 3 -->
-        <div class="feature-card">
-          <div class="feature-icon">🎵</div>
-          <h3 class="feature-title">6 Terapias Científicas</h3>
-          <p>Notched Sound, CR Neuromodulation, Masking, Ambientes + Híbridos. Todo en un solo lugar.</p>
+        <!-- Treatment 3: Masking -->
+        <div class="treatment-card">
+          <div class="treatment-icon">🔊</div>
+          <h3 class="treatment-title">Sound Masking</h3>
+          <p class="treatment-description">
+            7 tipos de ruidos para enmascaramiento completo del tinnitus.
+            Alivio inmediato en episodios críticos.
+          </p>
+          <ul class="treatment-features">
+            <li>White, Pink, Brown, Violet, Grey noise</li>
+            <li>Narrowband y Bandpass filtrados</li>
+            <li>Generación algorítmica Paul Kellett</li>
+            <li>Uso temporal para crisis agudas</li>
+          </ul>
         </div>
 
-        <!-- Feature 4 -->
-        <div class="feature-card">
-          <div class="feature-icon">🎥</div>
-          <h3 class="feature-title">
-            Música YouTube Integrada
-            <span class="feature-new">NUEVO</span>
-          </h3>
-          <p>Combina terapia con música relajante de YouTube. Control independiente de volumen. Video flotante opcional.</p>
+        <!-- Treatment 4: Ambient -->
+        <div class="treatment-card">
+          <div class="treatment-icon">🌧️</div>
+          <h3 class="treatment-title">Sonidos Ambientales</h3>
+          <p class="treatment-description">
+            10 ambientes naturales sintetizados. Terapia de habituación gradual
+            sin enmascaramiento total.
+          </p>
+          <ul class="treatment-features">
+            <li>Rain, Ocean, Forest, River, Wind, Fireplace</li>
+            <li>Café, Campfire, Stream, Thunder</li>
+            <li>Síntesis con LFO modulado</li>
+            <li>Mejor adherencia a largo plazo</li>
+          </ul>
         </div>
 
-        <!-- Feature 5 -->
-        <div class="feature-card">
-          <div class="feature-icon">⚡</div>
-          <h3 class="feature-title">
-            Cambio de Sonidos en Vivo
-            <span class="feature-new">NUEVO</span>
-          </h3>
-          <p>Cambia entre ruido blanco, rosa, marrón, ambientes naturales SIN interrumpir tu sesión. Flujo continuo perfecto.</p>
+        <!-- Treatment 5: Hybrid Notched -->
+        <div class="treatment-card">
+          <div class="treatment-icon">🎵</div>
+          <h3 class="treatment-title">Hybrid Notched + Ambient</h3>
+          <p class="treatment-description">
+            Combina terapia notched con sonidos relajantes. Balance ajustable
+            en tiempo real (0-100%).
+          </p>
+          <ul class="treatment-features">
+            <li>Notched therapy + ambiente natural</li>
+            <li>Slider de balance dual-stream</li>
+            <li>Crossfade suave al cambiar sonidos</li>
+            <li>Para pacientes con ansiedad</li>
+          </ul>
         </div>
 
-        <!-- Feature 6 -->
-        <div class="feature-card">
-          <div class="feature-icon">🎨</div>
-          <h3 class="feature-title">5 Visualizaciones Relajantes</h3>
-          <p>Fractales, ondas, partículas, mandalas, auroras. Meditación visual mientras tratas tu tinnitus.</p>
+        <!-- Treatment 6: Hybrid CR -->
+        <div class="treatment-card">
+          <div class="treatment-icon">🌊</div>
+          <h3 class="treatment-title">Hybrid CR + Ambient</h3>
+          <p class="treatment-description">
+            CR neuromodulation mezclado con ambientes relajantes.
+            Mayor adherencia en protocolos largos (4-6h).
+          </p>
+          <ul class="treatment-features">
+            <li>4 tonos CR + sonido natural</li>
+            <li>Control independiente de volúmenes</li>
+            <li>Reduce fatiga auditiva</li>
+            <li>Para terapias extendidas</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- NEW FEATURE: YouTube Integration -->
+      <div style="max-width: 900px; margin: 3rem auto; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🎥</div>
+        <h3 style="font-size: 2rem; margin-bottom: 1rem;">NUEVO: Música YouTube Integrada</h3>
+        <p style="font-size: 1.2rem; margin-bottom: 1.5rem; opacity: 0.95;">
+          Combina cualquier terapia con música relajante de YouTube. Control independiente
+          de volumen + video flotante opcional para confirmar reproducción.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="checkmark">✓</span>
+            <span>Océano, lluvia, naturaleza</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="checkmark">✓</span>
+            <span>White/Pink/Brown noise</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="checkmark">✓</span>
+            <span>Volumen independiente</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Session Management Section -->
+  <section class="sessions-section">
+    <div class="container">
+      <h2 class="section-title">Sistema Completo de Gestión de Sesiones</h2>
+      <p class="section-subtitle">
+        Control total de tu tratamiento con seguimiento inteligente y personalización en tiempo real.
+      </p>
+
+      <div class="sessions-grid">
+        <div class="session-card">
+          <div class="session-icon">⏱️</div>
+          <h3 class="session-title">Duración Personalizable</h3>
+          <p class="session-description">
+            Elige de 10 a 120 minutos. Temporizador visual con countdown.
+            Notificación al finalizar. Pausar/reanudar en cualquier momento.
+          </p>
         </div>
 
-        <!-- Feature 7 -->
-        <div class="feature-card">
-          <div class="feature-icon">🔊</div>
-          <h3 class="feature-title">Balance Estéreo L-R</h3>
-          <p>Tinnitus unilateral? Ajusta el balance izquierdo-derecho en tiempo real. Personalización total.</p>
+        <div class="session-card">
+          <div class="session-icon">🎚️</div>
+          <h3 class="session-title">Controles en Tiempo Real</h3>
+          <p class="session-description">
+            Ajusta volumen, balance estéreo L-R, frecuencia (±5%) durante sesión activa.
+            Todo sin interrumpir el audio. Cambios suaves con fade automático.
+          </p>
         </div>
 
-        <!-- Feature 8 -->
-        <div class="feature-card">
-          <div class="feature-icon">💾</div>
-          <h3 class="feature-title">Grabación de Sesiones WAV</h3>
-          <p>Graba tus terapias en audio profesional. Usa offline en cualquier dispositivo. Portabilidad total.</p>
+        <div class="session-card">
+          <div class="session-icon">🔄</div>
+          <h3 class="session-title">Cambio de Sonidos Sin Cortes</h3>
+          <p class="session-description">
+            Cambia entre white/pink/brown noise o ambientes SIN detener la sesión.
+            YouTube continúa reproduciendo. Transiciones suaves (1.5s).
+          </p>
         </div>
 
-        <!-- Feature 9 -->
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3 class="feature-title">Seguimiento Inteligente</h3>
-          <p>Historial completo de sesiones. Gráficas de progreso. Análisis IA de tu evolución.</p>
+        <div class="session-card">
+          <div class="session-icon">💾</div>
+          <h3 class="session-title">Grabación de Sesiones WAV</h3>
+          <p class="session-description">
+            Graba 30 seg de tu terapia en audio profesional WAV estéreo (44.1kHz).
+            Descarga y usa offline en cualquier dispositivo. Sin límites.
+          </p>
+        </div>
+
+        <div class="session-card">
+          <div class="session-icon">📊</div>
+          <h3 class="session-title">Historial Completo</h3>
+          <p class="session-description">
+            Todas tus sesiones guardadas: duración, terapia usada, fecha/hora.
+            Gráficas de progreso. Exporta datos en JSON para análisis externo.
+          </p>
+        </div>
+
+        <div class="session-card">
+          <div class="session-icon">🎨</div>
+          <h3 class="session-title">5 Visualizaciones Relajantes</h3>
+          <p class="session-description">
+            Fractales, ondas, partículas, mandalas, auroras. Fullscreen opcional.
+            Meditación visual mientras tratas tu tinnitus. Canvas 2D en 60 FPS.
+          </p>
         </div>
       </div>
     </div>
@@ -853,8 +1084,8 @@
   <!-- Pricing Section -->
   <section class="pricing-section">
     <div class="container">
-      <h2 class="pricing-title">Precio Especial de Lanzamiento</h2>
-      <p class="pricing-subtitle">Solo para los primeros 100 usuarios</p>
+      <h2 class="section-title">Precio Especial de Lanzamiento</h2>
+      <p class="section-subtitle">Solo para los primeros 100 usuarios</p>
 
       <div class="pricing-card">
         <div class="pricing-badge">OFERTA HOY</div>
@@ -867,7 +1098,7 @@
         <ul class="pricing-features">
           <li>
             <span class="checkmark">✓</span>
-            <span><strong>Acceso ilimitado</strong> a todas las terapias</span>
+            <span><strong>Acceso ilimitado</strong> a las 6 terapias</span>
           </li>
           <li>
             <span class="checkmark">✓</span>
@@ -879,7 +1110,11 @@
           </li>
           <li>
             <span class="checkmark">✓</span>
-            <span><strong>Grabación de sesiones</strong> en audio WAV</span>
+            <span><strong>Cambio de sonidos en vivo</strong> (NUEVO)</span>
+          </li>
+          <li>
+            <span class="checkmark">✓</span>
+            <span><strong>Grabación de sesiones WAV</strong></span>
           </li>
           <li>
             <span class="checkmark">✓</span>
@@ -887,15 +1122,11 @@
           </li>
           <li>
             <span class="checkmark">✓</span>
-            <span><strong>Actualizaciones automáticas</strong> de por vida</span>
+            <span><strong>Historial y estadísticas</strong></span>
           </li>
           <li>
             <span class="checkmark">✓</span>
-            <span><strong>Soporte prioritario</strong> 24/7</span>
-          </li>
-          <li>
-            <span class="checkmark">✓</span>
-            <span><strong>Garantía 30 días</strong> devolución de dinero</span>
+            <span><strong>Soporte 24/7</strong> + actualizaciones</span>
           </li>
         </ul>
 
@@ -913,14 +1144,14 @@
   <!-- Testimonials -->
   <section class="testimonials-section">
     <div class="container">
-      <h2 class="pain-title">Lo Que Dicen Nuestros Usuarios</h2>
+      <h2 class="section-title">Lo Que Dicen Nuestros Usuarios</h2>
 
       <div class="testimonial-grid">
         <div class="testimonial-card">
           <div class="testimonial-stars">★★★★★</div>
           <p class="testimonial-text">
-            "Después de 8 años sufriendo con tinnitus, este sistema cambió mi vida. En 3 semanas
-            el zumbido bajó un 70%. Puedo dormir de nuevo. INCREÍBLE."
+            "Después de 8 años con tinnitus, este sistema cambió mi vida. En 3 semanas
+            el zumbido bajó notablemente. Ahora puedo dormir sin medicamentos. Increíble."
           </p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">MR</div>
@@ -934,8 +1165,8 @@
         <div class="testimonial-card">
           <div class="testimonial-stars">★★★★★</div>
           <p class="testimonial-text">
-            "Probé todo: pastillas, terapias caras, acupuntura. Nada funcionó. Con este sistema
-            IA en solo 30 días mi tinnitus casi desapareció. Valió cada centavo."
+            "Probé pastillas, acupuntura, terapias caras. Con este sistema en 30 días mi tinnitus
+            se redujo un 60-70%. La función de YouTube es genial. Valió cada centavo."
           </p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">JL</div>
@@ -949,8 +1180,8 @@
         <div class="testimonial-card">
           <div class="testimonial-stars">★★★★★</div>
           <p class="testimonial-text">
-            "La función nueva de YouTube es genial. Escucho música mientras hago terapia.
-            Ya no es aburrido. Mi ansiedad bajó y mi tinnitus también. ¡Gracias!"
+            "La combinación de terapia notched con música YouTube me ayudó enormemente.
+            Ya no es aburrido. Mi ansiedad bajó y el tinnitus también. ¡Gracias!"
           </p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">AC</div>
@@ -971,7 +1202,7 @@
         <div class="guarantee-icon">🛡️</div>
         <h2 class="guarantee-title">Garantía Incondicional de 30 Días</h2>
         <p style="font-size: 1.2rem; line-height: 1.6;">
-          Si en 30 días no ves resultados, te devolvemos el 100% de tu dinero.
+          Si en 30 días no ves reducción en tu tinnitus, te devolvemos el 100% de tu dinero.
           Sin preguntas. Sin complicaciones. <strong>Riesgo CERO para ti.</strong>
         </p>
       </div>
@@ -1039,7 +1270,7 @@
   <div class="sticky-cta" id="stickyCTA">
     <div class="sticky-cta-content">
       <div class="sticky-cta-text">
-        🔥 Oferta especial: $1/mes (antes $49.99)
+        🔥 Oferta especial: $1/mes (antes $49.99) - Reduce tu tinnitus hasta 70%
       </div>
       <button class="cta-primary" onclick="scrollToForm()" style="font-size: 1rem; padding: 1rem 2rem;">
         QUIERO MI ACCESO AHORA
@@ -1100,7 +1331,6 @@
         block: 'center'
       });
 
-      // Focus on name input
       setTimeout(() => {
         document.getElementById('name').focus();
       }, 500);
@@ -1119,7 +1349,7 @@
         source: 'landing1'
       };
 
-      // Store in localStorage (en producción, enviar a backend)
+      // Store in localStorage
       const leads = JSON.parse(localStorage.getItem('tinnitus_leads') || '[]');
       leads.push(data);
       localStorage.setItem('tinnitus_leads', JSON.stringify(leads));
@@ -1131,9 +1361,6 @@
 
       // Reset form
       event.target.reset();
-
-      // Track conversion (Google Analytics, Facebook Pixel, etc.)
-      // gtag('event', 'conversion', { 'send_to': 'AW-CONVERSION_ID' });
     }
 
     function closeModal() {
@@ -1145,14 +1372,6 @@
       if (e.target.id === 'successModal') {
         closeModal();
       }
-    });
-
-    // Analytics Events
-    document.querySelectorAll('.cta-primary').forEach(btn => {
-      btn.addEventListener('click', () => {
-        console.log('CTA clicked:', btn.textContent.trim());
-        // Track event: gtag('event', 'cta_click', { 'location': 'hero' });
-      });
     });
   </script>
 </body>
